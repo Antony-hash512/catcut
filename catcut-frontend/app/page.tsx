@@ -61,7 +61,6 @@ export default function Home() {
         setIsTauri(true);
         try {
           const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
-          const { convertFileSrc } = await import("@tauri-apps/api/core");
           
           const appWindow = getCurrentWebviewWindow();
           const unlisten = await appWindow.onDragDropEvent((event) => {
@@ -72,7 +71,7 @@ export default function Home() {
                 const filename = filePath.split(/[/\\]/).pop() || "local_media";
                 
                 setLocalFilePath(filePath);
-                const url = convertFileSrc(filePath);
+                const url = `http://localhost:8000/api/stream-file?file_path=${encodeURIComponent(filePath)}`;
                 setMediaUrl(url);
                 setFile({ name: filename, size: 0 } as any);
                 setErrorMsg(null);
@@ -180,7 +179,6 @@ export default function Home() {
     if (isTauri) {
       try {
         const { open } = await import("@tauri-apps/plugin-dialog");
-        const { convertFileSrc } = await import("@tauri-apps/api/core");
         
         const selected = await open({
           multiple: false,
@@ -195,7 +193,7 @@ export default function Home() {
           const filename = filePath.split(/[/\\]/).pop() || "local_media";
           
           setLocalFilePath(filePath);
-          const url = convertFileSrc(filePath);
+          const url = `http://localhost:8000/api/stream-file?file_path=${encodeURIComponent(filePath)}`;
           setMediaUrl(url);
           setFile({ name: filename, size: 0 } as any);
           setErrorMsg(null);

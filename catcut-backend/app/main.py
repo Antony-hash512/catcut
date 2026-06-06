@@ -2,7 +2,7 @@ import os
 import shutil
 import tempfile
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -188,6 +188,15 @@ async def api_transcribe_path(req: TranscribePathRequest):
     except Exception as e:
         print(f"Error during path transcription: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/stream-file")
+async def api_stream_file(file_path: str):
+    """
+    Streams a local file by its absolute path.
+    """
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
+    return FileResponse(file_path)
 
 @app.post("/api/generate-ass")
 async def api_generate_ass(request: ASSGenerateRequest):
