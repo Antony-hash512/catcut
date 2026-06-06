@@ -14,7 +14,7 @@ def get_model(model_name: str = "small", device: str = "cuda", compute_type: str
     if _model is None:
         print(f"Loading stable-ts model '{model_name}' on '{device}' with '{compute_type}'...")
         # stable-ts wraps faster-whisper load_model
-        _model = stable_whisper.load_model(model_name, device=device, compute_type=compute_type)
+        _model = stable_whisper.load_faster_whisper(model_name, device=device, compute_type=compute_type)
     return _model
 
 def transcribe_media(file_path: str, model_name: str = "small", device: str = "cuda") -> Dict[str, Any]:
