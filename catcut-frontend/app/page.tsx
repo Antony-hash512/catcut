@@ -43,6 +43,7 @@ export default function Home() {
 
   // Tauri integration states
   const [isTauri, setIsTauri] = useState(false);
+  const [showTauriWarning, setShowTauriWarning] = useState(true); // Show/hide the warning banner 
   const [localFilePath, setLocalFilePath] = useState<string | null>(null);
 
   // Clean up media URL on unmount
@@ -295,11 +296,11 @@ export default function Home() {
   // Play a specific word segment
   const playWordSegment = async (word: WordItem) => {
     if (!mediaRef.current) return;
-    
+
     try {
       // Catch synchronous DOMExceptions if video readyState is too low
       mediaRef.current.currentTime = word.start;
-      
+
       const playPromise = mediaRef.current.play();
       if (playPromise !== undefined) {
         // Catch asynchronous AbortError from play() interrupting
@@ -426,7 +427,7 @@ export default function Home() {
       </header>
 
       {/* Tauri Warning Banner */}
-      {isTauri && (
+      {isTauri && showTauriWarning && (
         <div style={{
           background: "rgba(245, 158, 11, 0.15)",
           border: "1px solid #f59e0b",
@@ -434,9 +435,37 @@ export default function Home() {
           padding: "1rem",
           marginBottom: "2rem",
           color: "#fcd34d",
-          fontSize: "0.95rem"
+          fontSize: "0.95rem",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "1rem"
         }}>
-          ⚠️ <strong>Внимание:</strong> Вы используете десктопную версию (Tauri). Из-за особенностей движка WebKit2GTK воспроизведение видео в предпросмотре может работать нестабильно (лаги, артефакты). Мы рекомендуем пока использовать веб-версию для более плавной работы.
+          <div>
+            ⚠️ <strong>Внимание:</strong> Вы используете десктопную версию (Tauri). Из-за особенностей движка WebKit2GTK воспроизведение видео в предпросмотре может работать нестабильно (лаги, артефакты). Мы рекомендуем пока использовать веб-версию для более плавной работы.
+          </div>
+          <button
+            onClick={() => setShowTauriWarning(false)}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#fcd34d",
+              cursor: "pointer",
+              fontSize: "1.5rem",
+              lineHeight: 1,
+              padding: "0.2rem 0.5rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: 0.8,
+              transition: "opacity 0.2s"
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = "1"}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = "0.8"}
+            title="Скрыть предупреждение"
+          >
+            ×
+          </button>
         </div>
       )}
 
