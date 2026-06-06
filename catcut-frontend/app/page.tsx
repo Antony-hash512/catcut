@@ -293,14 +293,18 @@ export default function Home() {
   };
 
   // Play a specific word segment
-  const playWordSegment = (word: WordItem) => {
-    if (mediaRef.current) {
+  const playWordSegment = async (word: WordItem) => {
+    if (!mediaRef.current) return;
+    
+    try {
+      // Catch synchronous DOMExceptions if video readyState is too low
       mediaRef.current.currentTime = word.start;
       
       const playPromise = mediaRef.current.play();
       if (playPromise !== undefined) {
+        // Catch asynchronous AbortError from play() interrupting
         playPromise.catch((err) => {
-          console.warn("Video playback interrupted (this is normal when seeking quickly):", err);
+          console.warn("Video playback async interrupted:", err);
         });
       }
 
@@ -312,6 +316,8 @@ export default function Home() {
         }
       };
       mediaRef.current.addEventListener("timeupdate", checkStop);
+    } catch (err) {
+      console.warn("Video playback sync error (DOMException):", err);
     }
   };
 
