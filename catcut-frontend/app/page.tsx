@@ -21,11 +21,11 @@ export default function Home() {
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [words, setWords] = useState<WordItem[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  
+
   // AI Models state
   const [modelsList, setModelsList] = useState<ModelItem[]>([]);
   const [selectedModel, setSelectedModel] = useState("small");
-  
+
   // Styling settings
   const [fontName, setFontName] = useState("Montserrat");
   const [fontSize, setFontSize] = useState(26);
@@ -59,11 +59,11 @@ export default function Home() {
     let unlistenDragDrop: (() => void) | undefined;
 
     const setupTauri = async () => {
-      if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+      if (typeof window !== "undefined" && ("__TAURI__" in window || "__TAURI_INTERNALS__" in window)) {
         setIsTauri(true);
         try {
           const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
-          
+
           const appWindow = getCurrentWebviewWindow();
           const unlisten = await appWindow.onDragDropEvent((event) => {
             if (event.payload.type === "drop") {
@@ -71,7 +71,7 @@ export default function Home() {
               if (paths && paths.length > 0) {
                 const filePath = paths[0];
                 const filename = filePath.split(/[/\\]/).pop() || "local_media";
-                
+
                 setLocalFilePath(filePath);
                 setFile({ name: filename, size: 0 } as any);
                 setErrorMsg(null);
@@ -131,7 +131,7 @@ export default function Home() {
   const handleDownloadModel = async (modelName: string) => {
     // Optimistic local state update to trigger spinner
     setModelsList(prev => prev.map(m => m.name === modelName ? { ...m, status: "downloading" } : m));
-    
+
     try {
       const response = await fetch("http://localhost:8000/api/models/download", {
         method: "POST",
@@ -183,7 +183,7 @@ export default function Home() {
     if (isTauri) {
       try {
         const { open } = await import("@tauri-apps/plugin-dialog");
-        
+
         const selected = await open({
           multiple: false,
           filters: [{
@@ -191,11 +191,11 @@ export default function Home() {
             extensions: ["mp4", "mkv", "mov", "avi", "mp3", "wav", "m4a", "flac"]
           }]
         });
-        
+
         if (selected && typeof selected === "string") {
           const filePath = selected;
           const filename = filePath.split(/[/\\]/).pop() || "local_media";
-          
+
           setLocalFilePath(filePath);
           setFile({ name: filename, size: 0 } as any);
           setErrorMsg(null);
@@ -251,11 +251,11 @@ export default function Home() {
       }
 
       const data = await response.json();
-      
+
       // Map segments and words from stable-ts response structure
       const allWords: WordItem[] = [];
       let counter = 0;
-      
+
       if (data.segments && Array.isArray(data.segments)) {
         data.segments.forEach((seg: any) => {
           if (seg.words && Array.isArray(seg.words)) {
@@ -270,7 +270,7 @@ export default function Home() {
           }
         });
       }
-      
+
       setWords(allWords);
       setStep("editor");
     } catch (err: any) {
@@ -292,11 +292,18 @@ export default function Home() {
     setWords(prev => prev.map(w => w.id === id ? { ...w, [field]: value } : w));
   };
 
-  // Seek and play specific word
+  // Play a specific word segment
   const playWordSegment = (word: WordItem) => {
     if (mediaRef.current) {
       mediaRef.current.currentTime = word.start;
-      mediaRef.current.play();
+      
+      const playPromise = mediaRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn("Video playback interrupted (this is normal when seeking quickly):", err);
+        });
+      }
+
       // Optionally stop playing after the word end
       const checkStop = () => {
         if (mediaRef.current && mediaRef.current.currentTime >= word.end) {
@@ -366,15 +373,34 @@ export default function Home() {
 
       if (!response.ok) throw new Error("Не удалось сгенерировать файл субтитров.");
 
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = `${file?.name ? file.name.split(".")[0] : "subtitles"}.ass`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      const assContent = await response.text();
+      const defaultFilename = `${file?.name ? file.name.split(".")[0] : "subtitles"}.ass`;
+
+      if (isTauri) {
+        // Native Tauri file save
+        const { save } = await import("@tauri-apps/plugin-dialog");
+        const { writeTextFile } = await import("@tauri-apps/plugin-fs");
+
+        const savePath = await save({
+          defaultPath: defaultFilename,
+          filters: [{ name: "ASS Subtitles", extensions: ["ass"] }]
+        });
+
+        if (savePath) {
+          await writeTextFile(savePath, assContent);
+        }
+      } else {
+        // Browser fallback
+        const blob = new Blob([assContent], { type: "text/plain;charset=utf-8" });
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = defaultFilename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+      }
     } catch (err: any) {
       alert(err.message || "Ошибка при генерации .ass файла.");
     }
@@ -404,7 +430,7 @@ export default function Home() {
           color: "#fcd34d",
           fontSize: "0.95rem"
         }}>
-          ⚠️ <strong>Внимание:</strong> Вы используете десктопную версию (Tauri). Из-за особенностей движка WebKit2GTK на Linux воспроизведение видео в предпросмотре может работать нестабильно (лаги, артефакты). Мы рекомендуем пока использовать веб-версию для более плавной работы.
+          ⚠️ <strong>Внимание:</strong> Вы используете десктопную версию (Tauri). Из-за особенностей движка WebKit2GTK воспроизведение видео в предпросмотре может работать нестабильно (лаги, артефакты). Мы рекомендуем пока использовать веб-версию для более плавной работы.
         </div>
       )}
 
@@ -425,17 +451,17 @@ export default function Home() {
       {/* STEP 1: UPLOAD SCREEN */}
       {step === "upload" && (
         <div className="step-container" style={{ display: "grid", gridTemplateColumns: file ? "1fr 350px" : "1fr", gap: "2rem" }}>
-          
+
           {/* Main upload area */}
           <div>
-            <div 
+            <div
               className="upload-card"
               style={{ maxWidth: "100%", margin: "0 auto" }}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={handleUploadClick}
             >
-              <input 
+              <input
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileChange}
@@ -445,7 +471,7 @@ export default function Home() {
               <span className="upload-icon">🎬</span>
               <h2 className="upload-title">Перетащите видео или аудио файл</h2>
               <p className="upload-subtitle">Поддерживаются форматы MP4, MKV, MOV, MP3, WAV и др.</p>
-              
+
               {file && (
                 <div style={{
                   background: "rgba(255, 255, 255, 0.05)",
@@ -465,11 +491,11 @@ export default function Home() {
                 </div>
               )}
             </div>
-            
+
             {file && (
               <div style={{ textAlign: "center", marginTop: "2rem" }}>
-                <button 
-                  className="btn btn-primary" 
+                <button
+                  className="btn btn-primary"
                   onClick={startTranscription}
                   disabled={modelsList.find(m => m.name === selectedModel)?.cached === false}
                 >
@@ -502,7 +528,7 @@ export default function Home() {
               <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "1rem" }}>
                 Выберите размер модели. Большие модели точнее, но работают медленнее и требуют больше VRAM/ОЗУ.
               </p>
-              <select 
+              <select
                 className="form-control"
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
@@ -520,10 +546,10 @@ export default function Home() {
               <h4 style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: "1rem", color: "var(--text-muted)" }}>
                 Менеджер моделей на диске
               </h4>
-              
+
               <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                 {modelsList.map((m) => (
-                  <div 
+                  <div
                     key={m.name}
                     style={{
                       background: "rgba(10, 11, 14, 0.5)",
@@ -578,7 +604,7 @@ export default function Home() {
                           Загрузка...
                         </span>
                       ) : (
-                        <button 
+                        <button
                           onClick={() => handleDownloadModel(m.name)}
                           style={{
                             background: "rgba(255, 255, 255, 0.05)",
@@ -623,15 +649,15 @@ export default function Home() {
       {/* STEP 3: WORKSPACE / EDITOR */}
       {step === "editor" && (
         <div className="step-container editor-layout">
-          
+
           {/* Left Column: Styles and Preview */}
           <aside className="sidebar-panel">
             <h3 className="panel-title">🎨 Настройки стиля ASS</h3>
-            
+
             {/* Font Selection */}
             <div className="form-group">
               <label className="form-label">Шрифт субтитров</label>
-              <select 
+              <select
                 className="form-control"
                 value={fontName}
                 onChange={(e) => setFontName(e.target.value)}
@@ -650,10 +676,10 @@ export default function Home() {
             {/* Font Size */}
             <div className="form-group">
               <label className="form-label">Размер шрифта: {fontSize}</label>
-              <input 
-                type="range" 
-                min="14" 
-                max="50" 
+              <input
+                type="range"
+                min="14"
+                max="50"
                 value={fontSize}
                 onChange={(e) => setFontSize(Number(e.target.value))}
                 style={{ width: "100%" }}
@@ -663,7 +689,7 @@ export default function Home() {
             {/* Subtitle Style Type */}
             <div className="form-group">
               <label className="form-label">Стиль анимации</label>
-              <select 
+              <select
                 className="form-control"
                 value={styleMode}
                 onChange={(e) => setStyleMode(e.target.value as any)}
@@ -678,8 +704,8 @@ export default function Home() {
               <label className="form-label">Цвет обычного текста</label>
               <div className="color-picker-container">
                 <div className="color-picker-preview" style={{ backgroundColor: inactiveColor }}>
-                  <input 
-                    type="color" 
+                  <input
+                    type="color"
                     className="color-picker-input"
                     value={inactiveColor}
                     onChange={(e) => setInactiveColor(e.target.value)}
@@ -694,8 +720,8 @@ export default function Home() {
               <label className="form-label">Цвет активного слова</label>
               <div className="color-picker-container">
                 <div className="color-picker-preview" style={{ backgroundColor: activeColor }}>
-                  <input 
-                    type="color" 
+                  <input
+                    type="color"
                     className="color-picker-input"
                     value={activeColor}
                     onChange={(e) => setActiveColor(e.target.value)}
@@ -709,20 +735,20 @@ export default function Home() {
             <div className="flex-inputs">
               <div className="form-group">
                 <label className="form-label">Слов в строке: {maxWordsPerLine}</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   className="form-control"
-                  min="1" 
+                  min="1"
                   max="10"
                   value={maxWordsPerLine}
                   onChange={(e) => setMaxWordsPerLine(Math.max(1, Number(e.target.value)))}
                 />
               </div>
-              
+
               <div className="form-group">
                 <label className="form-label">Пауза-стык (сек): {maxGapSeconds}</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   className="form-control"
                   step="0.1"
                   min="0.2"
@@ -737,7 +763,7 @@ export default function Home() {
             {mediaUrl && (
               <div style={{ marginTop: "2rem" }}>
                 <h4 className="form-label" style={{ marginBottom: "0.5rem" }}>Предпросмотр аудио/видео</h4>
-                <video 
+                <video
                   ref={mediaRef}
                   src={mediaUrl}
                   controls
@@ -766,10 +792,10 @@ export default function Home() {
               {getGroupedLines().map((line, lineIdx) => {
                 // Check if the current player playback position falls within this entire line
                 const isLineActive = line.some(w => currentTime >= w.start && currentTime <= w.end);
-                
+
                 return (
-                  <div 
-                    key={`line-${lineIdx}`} 
+                  <div
+                    key={`line-${lineIdx}`}
                     className="word-group-row"
                     style={{
                       borderColor: isLineActive ? "var(--primary)" : "var(--border-color)",
@@ -788,18 +814,18 @@ export default function Home() {
                     <div className="word-cards-container">
                       {line.map((word) => {
                         const isWordActive = currentTime >= word.start && currentTime <= word.end;
-                        
+
                         return (
-                          <div 
-                            key={word.id} 
+                          <div
+                            key={word.id}
                             className="word-card"
                             style={{
                               backgroundColor: isWordActive ? "rgba(168, 85, 247, 0.15)" : "rgba(20, 22, 28, 0.8)",
                               borderColor: isWordActive ? "var(--primary)" : "var(--border-color)"
                             }}
                           >
-                            <input 
-                              type="text" 
+                            <input
+                              type="text"
                               className="word-input"
                               value={word.word}
                               onChange={(e) => updateWordText(word.id, e.target.value)}
@@ -807,12 +833,12 @@ export default function Home() {
                                 color: isWordActive ? "var(--accent)" : "var(--text-main)"
                               }}
                             />
-                            
+
                             <div className="time-inputs">
                               <div>
                                 <span>старт:</span>
-                                <input 
-                                  type="number" 
+                                <input
+                                  type="number"
                                   className="time-input"
                                   step="0.05"
                                   value={parseFloat(word.start.toFixed(2))}
@@ -821,8 +847,8 @@ export default function Home() {
                               </div>
                               <div>
                                 <span>конец:</span>
-                                <input 
-                                  type="number" 
+                                <input
+                                  type="number"
                                   className="time-input"
                                   step="0.05"
                                   value={parseFloat(word.end.toFixed(2))}
