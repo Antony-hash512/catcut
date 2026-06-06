@@ -53,6 +53,27 @@ export default function Home() {
     };
   }, [mediaUrl]);
 
+  // Prevent Next.js error overlays for video playback AbortErrors and other DOMExceptions
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason) {
+        const name = event.reason.name || "";
+        const message = event.reason.message || "";
+        const isAbortError = name === "AbortError" || message.includes("The operation was aborted");
+        const isVideoError = message.includes("play()") || message.includes("pause()") || message.includes("currentTime");
+        
+        if (isAbortError || isVideoError) {
+          console.warn("Muffled unhandled rejection from video playback:", event.reason);
+          event.preventDefault();
+        }
+      }
+    };
+    window.addEventListener("unhandledrejection", handleUnhandledRejection);
+    return () => {
+      window.removeEventListener("unhandledrejection", handleUnhandledRejection);
+    };
+  }, []);
+
   // Removed getAssetUrl since asset:// protocol breaks Range requests on Linux
 
   // Check if we are running under Tauri and setup drag-and-drop listener
@@ -409,7 +430,9 @@ export default function Home() {
         window.URL.revokeObjectURL(downloadUrl);
       }
     } catch (err: any) {
-      alert(err.message || "Ошибка при генерации .ass файла.");
+      console.error("ASS file saving error:", err);
+      const details = typeof err === "string" ? err : (err?.message || JSON.stringify(err));
+      alert(`Ошибка при генерации/сохранении .ass файла:\n${details || "Неизвестная ошибка"}`);
     }
   };
 
