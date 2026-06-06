@@ -7,6 +7,7 @@ interface WordItem {
   start: number;
   end: number;
   id: string; // unique identifier
+  deactivated?: boolean;
 }
 
 interface ModelItem {
@@ -314,6 +315,63 @@ export default function Home() {
     setWords(prev => prev.map(w => w.id === id ? { ...w, [field]: value } : w));
   };
 
+  const deleteWord = (id: string) => {
+    setWords(prev => prev.filter(w => w.id !== id));
+  };
+
+  const toggleWordActive = (id: string) => {
+    setWords(prev => prev.map(w => w.id === id ? { ...w, deactivated: !w.deactivated } : w));
+  };
+
+  const addWord = (targetId: string, position: "before" | "after") => {
+    setWords(prev => {
+      const idx = prev.findIndex(w => w.id === targetId);
+      if (idx === -1) return prev;
+
+      const targetWord = prev[idx];
+      let newStart = targetWord.end;
+      let newEnd = targetWord.end + 0.3;
+
+      if (position === "before") {
+        const prevWord = idx > 0 ? prev[idx - 1] : null;
+        if (prevWord) {
+          const gap = targetWord.start - prevWord.end;
+          newStart = prevWord.end;
+          newEnd = prevWord.end + (gap > 0 ? Math.min(0.3, gap) : 0.3);
+        } else {
+          newStart = Math.max(0, targetWord.start - 0.5);
+          newEnd = targetWord.start;
+        }
+      } else {
+        const nextWord = idx < prev.length - 1 ? prev[idx + 1] : null;
+        if (nextWord) {
+          const gap = nextWord.start - targetWord.end;
+          newStart = targetWord.end;
+          newEnd = targetWord.end + (gap > 0 ? Math.min(0.3, gap) : 0.3);
+        } else {
+          newStart = targetWord.end;
+          newEnd = targetWord.end + 0.5;
+        }
+      }
+
+      const newWord: WordItem = {
+        word: "слово",
+        start: Number(newStart.toFixed(2)),
+        end: Number(newEnd.toFixed(2)),
+        id: `w-new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        deactivated: false
+      };
+
+      const updated = [...prev];
+      if (position === "before") {
+        updated.splice(idx, 0, newWord);
+      } else {
+        updated.splice(idx + 1, 0, newWord);
+      }
+      return updated;
+    });
+  };
+
   // Play a specific word segment
   const playWordSegment = async (word: WordItem) => {
     if (!mediaRef.current) return;
@@ -388,7 +446,7 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          words: words.map(({ word, start, end }) => ({ word, start, end })),
+          words: words.filter(w => !w.deactivated).map(({ word, start, end }) => ({ word, start, end })),
           font_name: fontName,
           font_size: fontSize,
           active_color: activeColor,
@@ -849,7 +907,7 @@ export default function Home() {
             <div className="timeline-scroll">
               {getGroupedLines().map((line, lineIdx) => {
                 // Check if the current player playback position falls within this entire line
-                const isLineActive = line.some(w => currentTime >= w.start && currentTime <= w.end);
+                const isLineActive = line.some(w => !w.deactivated && currentTime >= w.start && currentTime <= w.end);
 
                 return (
                   <div
@@ -861,27 +919,49 @@ export default function Home() {
                     }}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "0.75rem", color: "var(--primary)", fontWeight: 600 }}>
-                        Строка {lineIdx + 1} ({line[0].start.toFixed(2)}s)
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--primary)", fontWeight: 600 }}>
+                          Строка {lineIdx + 1} ({line[0].start.toFixed(2)}s)
+                        </span>
+                        <button
+                          className="line-action-btn"
+                          title="Добавить слово в начало строки"
+                          onClick={() => addWord(line[0].id, 'before')}
+                        >
+                          + в начало
+                        </button>
+                      </div>
                       <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                        {line.map(w => w.word.trim()).join(" ")}
+                        {line.filter(w => !w.deactivated).map(w => w.word.trim()).join(" ")}
                       </span>
                     </div>
 
                     <div className="word-cards-container">
                       {line.map((word) => {
-                        const isWordActive = currentTime >= word.start && currentTime <= word.end;
+                        const isWordActive = !word.deactivated && currentTime >= word.start && currentTime <= word.end;
 
                         return (
                           <div
                             key={word.id}
-                            className="word-card"
-                            style={{
+                            className={`word-card ${word.deactivated ? "deactivated" : ""}`}
+                            style={word.deactivated ? {} : {
                               backgroundColor: isWordActive ? "rgba(168, 85, 247, 0.15)" : "rgba(20, 22, 28, 0.8)",
                               borderColor: isWordActive ? "var(--primary)" : "var(--border-color)"
                             }}
                           >
+                            <div className="word-card-toolbar">
+                              <button className="word-action-btn" title="Прослушать" onClick={() => playWordSegment(word)}>🔊</button>
+                              <button className="word-action-btn" title="Добавить слово после" onClick={() => addWord(word.id, "after")}>➕</button>
+                              <button 
+                                className={`word-action-btn ${word.deactivated ? "deactivated-toggle" : ""}`} 
+                                title={word.deactivated ? "Активировать" : "Деактивировать"} 
+                                onClick={() => toggleWordActive(word.id)}
+                              >
+                                {word.deactivated ? "🚫" : "👁️"}
+                              </button>
+                              <button className="word-action-btn word-delete-btn" title="Удалить" onClick={() => deleteWord(word.id)}>🗑️</button>
+                            </div>
+
                             <input
                               type="text"
                               className="word-input"
@@ -915,7 +995,7 @@ export default function Home() {
                               </div>
                             </div>
 
-                            <button className="play-word-btn" onClick={() => playWordSegment(word)}>
+                            <button className="play-word-btn" style={{ display: "none" }} onClick={() => playWordSegment(word)}>
                               🔊 Прослушать
                             </button>
                           </div>

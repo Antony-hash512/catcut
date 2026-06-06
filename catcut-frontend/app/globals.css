@@ -448,3 +448,85 @@ select.form-control option {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
 }
+
+/* Word Card Toolbar and Actions */
+.word-card-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
+  gap: 0.25rem;
+}
+
+.word-action-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  width: 24px;
+  height: 24px;
+}
+
+.word-action-btn:hover {
+  color: var(--primary-hover);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.word-action-btn.deactivated-toggle {
+  color: var(--error);
+}
+
+.word-action-btn.deactivated-toggle:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.word-delete-btn:hover {
+  color: var(--error) !important;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.word-card.deactivated {
+  opacity: 0.45;
+  background: rgba(15, 15, 20, 0.45) !important;
+  border-style: dashed !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.word-card.deactivated .word-input {
+  text-decoration: line-through;
+  color: var(--text-muted) !important;
+}
+
+.word-card.deactivated .time-input {
+  color: rgba(156, 163, 175, 0.4);
+}
+
+.line-action-btn {
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 4px;
+  color: var(--primary-hover);
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.line-action-btn:hover {
+  background: rgba(168, 85, 247, 0.25);
+  border-color: var(--primary);
+  color: #fff;
+  transform: translateY(-1px);
+}
