@@ -41,8 +41,102 @@ class ASSGenerateRequest(BaseModel):
 TEMP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temp")
 os.makedirs(TEMP_DIR, exist_ok=True)
 
+class DownloadModelRequest(BaseModel):
+    model_name: str
+
+# In-memory status tracker for downloads
+download_statuses = {}
+
+def get_cached_models_list():
+    """
+    Checks the local HuggingFace cache directory for downloaded models.
+    """
+    cache_dir = os.path.expanduser("~/.cache/huggingface/hub")
+    cached = set()
+    if os.path.exists(cache_dir):
+        try:
+            for item in os.listdir(cache_dir):
+                if item.startswith("models--Systran--faster-whisper-"):
+                    size = item.replace("models--Systran--faster-whisper-", "")
+                    cached.add(size)
+        except Exception as e:
+            print(f"Error scanning cache directory: {e}")
+    return cached
+
+def background_download_model(model_name: str):
+    global download_statuses
+    download_statuses[model_name] = "downloading"
+    try:
+        from huggingface_hub import snapshot_download
+        repo_id = f"Systran/faster-whisper-{model_name}"
+        print(f"Starting background download for {repo_id}...")
+        snapshot_download(repo_id=repo_id)
+        download_statuses[model_name] = "completed"
+        print(f"Background download for {repo_id} completed.")
+    except Exception as e:
+        print(f"Failed background download for {model_name}: {e}")
+        download_statuses[model_name] = f"failed: {str(e)}"
+
+@app.get("/api/models")
+async def api_get_models():
+    """
+    Returns lists of available Whisper models with their local download cache status.
+    """
+    supported_models = ["tiny", "base", "small", "medium", "large-v3"]
+    cached_models = get_cached_models_list()
+    
+    models_status = []
+    for m in supported_models:
+        status = download_statuses.get(m, "idle")
+        is_cached = m in cached_models
+        
+        # Override status if already cached
+        if is_cached:
+            status = "completed"
+            
+        models_status.append({
+            "name": m,
+            "cached": is_cached,
+            "status": status
+        })
+    return JSONResponse(content=models_status)
+
+@app.post("/api/models/download")
+async def api_download_model(req: DownloadModelRequest, background_tasks: BackgroundTasks):
+    """
+    Triggers background downloading for a Whisper model from Hugging Face.
+    """
+    model_name = req.model_name
+    supported_models = ["tiny", "base", "small", "medium", "large-v3"]
+    if model_name not in supported_models:
+        raise HTTPException(status_code=400, detail="Unsupported model size")
+        
+    cached_models = get_cached_models_list()
+    if model_name in cached_models:
+        return JSONResponse(content={"message": "Model is already cached", "status": "completed"})
+        
+    current_status = download_statuses.get(model_name, "idle")
+    if current_status == "downloading":
+        return JSONResponse(content={"message": "Download in progress", "status": "downloading"})
+        
+    # Launch background task
+    background_tasks.add_task(background_download_model, model_name)
+    return JSONResponse(content={"message": "Download started in background", "status": "downloading"})
+
+@app.get("/api/models/download-status/{model_name}")
+async def api_download_status(model_name: str):
+    """
+    Gets the current download progress status for a specific model size.
+    """
+    cached_models = get_cached_models_list()
+    if model_name in cached_models:
+        return JSONResponse(content={"status": "completed"})
+        
+    status = download_statuses.get(model_name, "idle")
+    return JSONResponse(content={"status": status})
+
 @app.post("/api/transcribe")
-async def api_transcribe(file: UploadFile = File(...)):
+async def api_transcribe(file: UploadFile = File(...), model_name: str = "small"):
     """
     Accepts video or audio file, transcribes it, and returns word-level timestamps.
     """
@@ -59,8 +153,8 @@ async def api_transcribe(file: UploadFile = File(...)):
         with open(temp_file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-        # Transcribe
-        result = transcribe_media(temp_file_path)
+        # Transcribe with the user selected model
+        result = transcribe_media(temp_file_path, model_name=model_name)
         return JSONResponse(content=result)
         
     except Exception as e:

@@ -9,12 +9,22 @@ interface WordItem {
   id: string; // unique identifier
 }
 
+interface ModelItem {
+  name: string;
+  cached: boolean;
+  status: "idle" | "downloading" | "completed" | string;
+}
+
 export default function Home() {
   const [step, setStep] = useState<"upload" | "loading" | "editor">("upload");
   const [file, setFile] = useState<File | null>(null);
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [words, setWords] = useState<WordItem[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  
+  // AI Models state
+  const [modelsList, setModelsList] = useState<ModelItem[]>([]);
+  const [selectedModel, setSelectedModel] = useState("small");
   
   // Styling settings
   const [fontName, setFontName] = useState("Montserrat");
@@ -37,6 +47,58 @@ export default function Home() {
       if (mediaUrl) URL.revokeObjectURL(mediaUrl);
     };
   }, [mediaUrl]);
+
+  // Fetch models list on startup
+  const fetchModels = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/models");
+      if (response.ok) {
+        const data = await response.json();
+        setModelsList(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch models list:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchModels();
+  }, []);
+
+  // Poll model download status if any model is currently downloading
+  useEffect(() => {
+    const hasDownloading = modelsList.some(m => m.status === "downloading");
+    if (hasDownloading) {
+      const timer = setInterval(() => {
+        fetchModels();
+      }, 2000);
+      return () => clearInterval(timer);
+    }
+  }, [modelsList]);
+
+  // Trigger model download
+  const handleDownloadModel = async (modelName: string) => {
+    // Optimistic local state update to trigger spinner
+    setModelsList(prev => prev.map(m => m.name === modelName ? { ...m, status: "downloading" } : m));
+    
+    try {
+      const response = await fetch("http://localhost:8000/api/models/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model_name: modelName }),
+      });
+      if (response.ok) {
+        fetchModels();
+      } else {
+        alert("Не удалось запустить скачивание модели.");
+        fetchModels();
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Ошибка при связи с сервером.");
+      fetchModels();
+    }
+  };
 
   // Handle file drop/select
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,14 +138,14 @@ export default function Home() {
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:8000/api/transcribe", {
+      const response = await fetch(`http://localhost:8000/api/transcribe?model_name=${selectedModel}`, {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Ошибка при распознавании видео.");
+        const errorText = await response.json().catch(() => ({ detail: "Неизвестная ошибка" }));
+        throw new Error(errorText.detail || "Ошибка при распознавании видео.");
       }
 
       const data = await response.json();
@@ -113,6 +175,7 @@ export default function Home() {
       console.error(err);
       setErrorMsg(err.message || "Не удалось связаться с сервером бэкенда. Убедитесь, что FastAPI сервер запущен на порту 8000.");
       setStep("upload");
+      fetchModels(); // Refresh model states
     } finally {
       setIsTranscribing(false);
     }
@@ -244,45 +307,177 @@ export default function Home() {
 
       {/* STEP 1: UPLOAD SCREEN */}
       {step === "upload" && (
-        <div className="step-container">
-          <div 
-            className="upload-card"
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input 
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              style={{ display: "none" }}
-              accept="video/*,audio/*"
-            />
-            <span className="upload-icon">🎬</span>
-            <h2 className="upload-title">Перетащите видео или аудио файл</h2>
-            <p className="upload-subtitle">Поддерживаются форматы MP4, MKV, MOV, MP3, WAV и др.</p>
+        <div className="step-container" style={{ display: "grid", gridTemplateColumns: file ? "1fr 350px" : "1fr", gap: "2rem" }}>
+          
+          {/* Main upload area */}
+          <div>
+            <div 
+              className="upload-card"
+              style={{ maxWidth: "100%", margin: "0 auto" }}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input 
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                style={{ display: "none" }}
+                accept="video/*,audio/*"
+              />
+              <span className="upload-icon">🎬</span>
+              <h2 className="upload-title">Перетащите видео или аудио файл</h2>
+              <p className="upload-subtitle">Поддерживаются форматы MP4, MKV, MOV, MP3, WAV и др.</p>
+              
+              {file && (
+                <div style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  padding: "0.75rem 1.5rem",
+                  borderRadius: "0.5rem",
+                  display: "inline-block",
+                  border: "1px solid var(--border-color)"
+                }}>
+                  📄 <strong>Выбран файл:</strong> {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                </div>
+              )}
+            </div>
             
             {file && (
-              <div style={{
-                background: "rgba(255, 255, 255, 0.05)",
-                padding: "0.75rem 1.5rem",
-                borderRadius: "0.5rem",
-                display: "inline-block",
-                marginBottom: "2rem",
-                border: "1px solid var(--border-color)"
-              }}>
-                📄 <strong>Выбран файл:</strong> {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+              <div style={{ textAlign: "center", marginTop: "2rem" }}>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={startTranscription}
+                  disabled={modelsList.find(m => m.name === selectedModel)?.cached === false}
+                >
+                  🚀 Начать распознавание речи
+                </button>
+                {modelsList.find(m => m.name === selectedModel)?.cached === false && (
+                  <p style={{ color: "var(--error)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
+                    Выбранная модель не скачана. Скачайте её справа перед продолжением.
+                  </p>
+                )}
               </div>
             )}
           </div>
 
-          {file && (
-            <div style={{ textAlign: "center", marginTop: "1rem" }}>
-              <button className="btn btn-primary" onClick={startTranscription}>
-                🚀 Начать распознавание речи
-              </button>
+          {/* Sidebar: Model Selection and Downloader */}
+          <aside style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--border-color)",
+            borderRadius: "1.25rem",
+            padding: "1.5rem",
+            backdropFilter: "blur(12px)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.5rem"
+          }}>
+            <div>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                🧠 Модель Whisper ИИ
+              </h3>
+              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "1rem" }}>
+                Выберите размер модели. Большие модели точнее, но работают медленнее и требуют больше VRAM/ОЗУ.
+              </p>
+              <select 
+                className="form-control"
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                style={{ fontWeight: 600 }}
+              >
+                <option value="tiny">Tiny (~75 MB) - Сверхбыстрая</option>
+                <option value="base">Base (~140 MB) - Быстрая</option>
+                <option value="small">Small (~460 MB) - Оптимально</option>
+                <option value="medium">Medium (~1.5 GB) - Высокая точность</option>
+                <option value="large-v3">Large-v3 (~3 GB) - Максимальная точность</option>
+              </select>
             </div>
-          )}
+
+            <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "1rem" }}>
+              <h4 style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: "1rem", color: "var(--text-muted)" }}>
+                Менеджер моделей на диске
+              </h4>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {modelsList.map((m) => (
+                  <div 
+                    key={m.name}
+                    style={{
+                      background: "rgba(10, 11, 14, 0.5)",
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "0.5rem",
+                      padding: "0.75rem",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center"
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontWeight: 700, fontSize: "0.9rem", textTransform: "capitalize" }}>
+                        {m.name}
+                      </span>
+                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
+                        {m.name === "tiny" && "75 MB"}
+                        {m.name === "base" && "140 MB"}
+                        {m.name === "small" && "460 MB"}
+                        {m.name === "medium" && "1.5 GB"}
+                        {m.name === "large-v3" && "3.0 GB"}
+                      </div>
+                    </div>
+
+                    <div>
+                      {m.cached ? (
+                        <span style={{
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          color: "var(--success)",
+                          background: "rgba(34, 197, 94, 0.12)",
+                          padding: "0.2rem 0.5rem",
+                          borderRadius: "0.25rem",
+                          border: "1px solid rgba(34, 197, 94, 0.2)"
+                        }}>
+                          Скачана
+                        </span>
+                      ) : m.status === "downloading" ? (
+                        <span style={{
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          color: "var(--primary)",
+                          background: "rgba(168, 85, 247, 0.12)",
+                          padding: "0.2rem 0.5rem",
+                          borderRadius: "0.25rem",
+                          border: "1px solid rgba(168, 85, 247, 0.2)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.3rem"
+                        }}>
+                          <span className="spinner" style={{ width: "10px", height: "10px", borderWidth: "1.5px", margin: 0 }}></span>
+                          Загрузка...
+                        </span>
+                      ) : (
+                        <button 
+                          onClick={() => handleDownloadModel(m.name)}
+                          style={{
+                            background: "rgba(255, 255, 255, 0.05)",
+                            border: "1px solid var(--border-color)",
+                            color: "var(--text-main)",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            padding: "0.3rem 0.75rem",
+                            borderRadius: "0.25rem",
+                            cursor: "pointer"
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
+                          onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"}
+                        >
+                          Скачать
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
         </div>
       )}
 
@@ -295,7 +490,7 @@ export default function Home() {
               Распознаем речь...
             </h2>
             <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
-              Это может занять некоторое время. Наша нейросеть извлекает дорожку, выравнивает таймкоды каждого слова с помощью GPU ускорения.
+              Это может занять некоторое время. Наша нейросеть запускает модель <strong>{selectedModel}</strong>, извлекает дорожку и выравнивает таймкоды каждого слова с помощью GPU ускорения.
             </p>
           </div>
         </div>
