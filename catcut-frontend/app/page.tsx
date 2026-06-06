@@ -52,12 +52,14 @@ export default function Home() {
     };
   }, [mediaUrl]);
 
+  // Removed getAssetUrl since asset:// protocol breaks Range requests on Linux
+
   // Check if we are running under Tauri and setup drag-and-drop listener
   useEffect(() => {
     let unlistenDragDrop: (() => void) | undefined;
 
     const setupTauri = async () => {
-      if (typeof window !== "undefined" && "__TAURI__" in window) {
+      if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
         setIsTauri(true);
         try {
           const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
@@ -71,11 +73,13 @@ export default function Home() {
                 const filename = filePath.split(/[/\\]/).pop() || "local_media";
                 
                 setLocalFilePath(filePath);
-                const url = `http://localhost:8000/api/stream-file?file_path=${encodeURIComponent(filePath)}`;
-                setMediaUrl(url);
                 setFile({ name: filename, size: 0 } as any);
                 setErrorMsg(null);
                 setStep("upload");
+
+                // Use the FastAPI endpoint which properly handles HTTP Range requests for video seeking
+                const url = `http://localhost:8000/api/stream-file?file_path=${encodeURIComponent(filePath)}`;
+                setMediaUrl(url);
               }
             }
           });
@@ -193,11 +197,13 @@ export default function Home() {
           const filename = filePath.split(/[/\\]/).pop() || "local_media";
           
           setLocalFilePath(filePath);
-          const url = `http://localhost:8000/api/stream-file?file_path=${encodeURIComponent(filePath)}`;
-          setMediaUrl(url);
           setFile({ name: filename, size: 0 } as any);
           setErrorMsg(null);
           setStep("upload");
+
+          // Use the FastAPI endpoint which properly handles HTTP Range requests for video seeking
+          const url = `http://localhost:8000/api/stream-file?file_path=${encodeURIComponent(filePath)}`;
+          setMediaUrl(url);
         }
       } catch (err) {
         console.error("Failed to open Tauri file dialog:", err);
@@ -386,6 +392,21 @@ export default function Home() {
           Генерация пословных субтитров
         </div>
       </header>
+
+      {/* Tauri Warning Banner */}
+      {isTauri && (
+        <div style={{
+          background: "rgba(245, 158, 11, 0.15)",
+          border: "1px solid #f59e0b",
+          borderRadius: "0.75rem",
+          padding: "1rem",
+          marginBottom: "2rem",
+          color: "#fcd34d",
+          fontSize: "0.95rem"
+        }}>
+          ⚠️ <strong>Внимание:</strong> Вы используете десктопную версию (Tauri). Из-за особенностей движка WebKit2GTK на Linux воспроизведение видео в предпросмотре может работать нестабильно (лаги, артефакты). Мы рекомендуем пока использовать веб-версию для более плавной работы.
+        </div>
+      )}
 
       {/* Error Message banner */}
       {errorMsg && (

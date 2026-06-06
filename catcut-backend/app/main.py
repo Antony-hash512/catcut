@@ -1,8 +1,8 @@
 import os
 import shutil
 import tempfile
-from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
-from fastapi.responses import StreamingResponse, JSONResponse, FileResponse
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Request
+from fastapi.responses import StreamingResponse, JSONResponse, FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -190,13 +190,67 @@ async def api_transcribe_path(req: TranscribePathRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/stream-file")
-async def api_stream_file(file_path: str):
+async def api_stream_file(file_path: str, request: Request):
     """
-    Streams a local file by its absolute path.
+    Streams a local file with full HTTP Range request support.
+    Required for <video> seeking, scrubbing, and efficient playback.
     """
+    import mimetypes
+
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
-    return FileResponse(file_path)
+
+    file_size = os.path.getsize(file_path)
+    content_type, _ = mimetypes.guess_type(file_path)
+    if content_type is None:
+        content_type = "application/octet-stream"
+
+    range_header = request.headers.get("range")
+
+    if range_header:
+        # Parse "bytes=START-END"
+        range_spec = range_header.replace("bytes=", "")
+        parts = range_spec.split("-")
+        start = int(parts[0]) if parts[0] else 0
+        end = int(parts[1]) if parts[1] else file_size - 1
+
+        if start >= file_size:
+            return Response(
+                status_code=416,
+                headers={"Content-Range": f"bytes */{file_size}"}
+            )
+
+        end = min(end, file_size - 1)
+        content_length = end - start + 1
+
+        def iter_range():
+            with open(file_path, "rb") as f:
+                f.seek(start)
+                remaining = content_length
+                while remaining > 0:
+                    chunk = f.read(min(65536, remaining))
+                    if not chunk:
+                        break
+                    remaining -= len(chunk)
+                    yield chunk
+
+        return StreamingResponse(
+            iter_range(),
+            status_code=206,
+            media_type=content_type,
+            headers={
+                "Content-Range": f"bytes {start}-{end}/{file_size}",
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(content_length),
+            },
+        )
+    else:
+        # Full file — still advertise Range support
+        return FileResponse(
+            file_path,
+            media_type=content_type,
+            headers={"Accept-Ranges": "bytes"},
+        )
 
 @app.post("/api/generate-ass")
 async def api_generate_ass(request: ASSGenerateRequest):
