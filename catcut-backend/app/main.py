@@ -169,6 +169,26 @@ async def api_transcribe(file: UploadFile = File(...), model_name: str = "small"
             except Exception as cleanup_err:
                 print(f"Error cleaning up temp file {temp_file_path}: {cleanup_err}")
 
+class TranscribePathRequest(BaseModel):
+    file_path: str
+    model_name: Optional[str] = "small"
+
+@app.post("/api/transcribe-path")
+async def api_transcribe_path(req: TranscribePathRequest):
+    """
+    Accepts an absolute file path directly from the desktop client, transcribes it, 
+    and returns word-level timestamps without copying or uploading.
+    """
+    if not os.path.exists(req.file_path):
+        raise HTTPException(status_code=400, detail=f"File not found on disk: {req.file_path}")
+    
+    try:
+        result = transcribe_media(req.file_path, model_name=req.model_name)
+        return JSONResponse(content=result)
+    except Exception as e:
+        print(f"Error during path transcription: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/generate-ass")
 async def api_generate_ass(request: ASSGenerateRequest):
     """

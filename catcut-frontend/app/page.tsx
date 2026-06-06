@@ -41,12 +41,60 @@ export default function Home() {
   const mediaRef = useRef<HTMLVideoElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Tauri integration states
+  const [isTauri, setIsTauri] = useState(false);
+  const [localFilePath, setLocalFilePath] = useState<string | null>(null);
+
   // Clean up media URL on unmount
   useEffect(() => {
     return () => {
       if (mediaUrl) URL.revokeObjectURL(mediaUrl);
     };
   }, [mediaUrl]);
+
+  // Check if we are running under Tauri and setup drag-and-drop listener
+  useEffect(() => {
+    let unlistenDragDrop: (() => void) | undefined;
+
+    const setupTauri = async () => {
+      if (typeof window !== "undefined" && "__TAURI__" in window) {
+        setIsTauri(true);
+        try {
+          const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+          const { convertFileSrc } = await import("@tauri-apps/api/core");
+          
+          const appWindow = getCurrentWebviewWindow();
+          const unlisten = await appWindow.onDragDropEvent((event) => {
+            if (event.payload.type === "drop") {
+              const paths = event.payload.paths;
+              if (paths && paths.length > 0) {
+                const filePath = paths[0];
+                const filename = filePath.split(/[/\\]/).pop() || "local_media";
+                
+                setLocalFilePath(filePath);
+                const url = convertFileSrc(filePath);
+                setMediaUrl(url);
+                setFile({ name: filename, size: 0 } as any);
+                setErrorMsg(null);
+                setStep("upload");
+              }
+            }
+          });
+          unlistenDragDrop = unlisten;
+        } catch (err) {
+          console.error("Failed to initialize Tauri window/core APIs:", err);
+        }
+      }
+    };
+
+    setupTauri();
+
+    return () => {
+      if (unlistenDragDrop) {
+        unlistenDragDrop();
+      }
+    };
+  }, []);
 
   // Fetch models list on startup
   const fetchModels = async () => {
@@ -111,6 +159,7 @@ export default function Home() {
     setFile(selectedFile);
     const url = URL.createObjectURL(selectedFile);
     setMediaUrl(url);
+    setLocalFilePath(null); // Clear local file path since we are uploading a browser file
     setErrorMsg(null);
     setStep("upload");
   };
@@ -126,22 +175,71 @@ export default function Home() {
     }
   };
 
+  // Open native Tauri open dialog if in desktop mode, else fall back to file input
+  const handleUploadClick = async () => {
+    if (isTauri) {
+      try {
+        const { open } = await import("@tauri-apps/plugin-dialog");
+        const { convertFileSrc } = await import("@tauri-apps/api/core");
+        
+        const selected = await open({
+          multiple: false,
+          filters: [{
+            name: "Video and Audio",
+            extensions: ["mp4", "mkv", "mov", "avi", "mp3", "wav", "m4a", "flac"]
+          }]
+        });
+        
+        if (selected && typeof selected === "string") {
+          const filePath = selected;
+          const filename = filePath.split(/[/\\]/).pop() || "local_media";
+          
+          setLocalFilePath(filePath);
+          const url = convertFileSrc(filePath);
+          setMediaUrl(url);
+          setFile({ name: filename, size: 0 } as any);
+          setErrorMsg(null);
+          setStep("upload");
+        }
+      } catch (err) {
+        console.error("Failed to open Tauri file dialog:", err);
+      }
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
   // Upload file and start transcription
   const startTranscription = async () => {
-    if (!file) return;
+    if (!file && !localFilePath) return;
 
     setStep("loading");
     setIsTranscribing(true);
     setErrorMsg(null);
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      const response = await fetch(`http://localhost:8000/api/transcribe?model_name=${selectedModel}`, {
-        method: "POST",
-        body: formData,
-      });
+      let response;
+      if (localFilePath) {
+        // Direct local path transcription (bypassing file upload)
+        response = await fetch("http://localhost:8000/api/transcribe-path", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            file_path: localFilePath,
+            model_name: selectedModel,
+          }),
+        });
+      } else {
+        // Standard multipart file upload
+        const formData = new FormData();
+        formData.append("file", file!);
+        response = await fetch(`http://localhost:8000/api/transcribe?model_name=${selectedModel}`, {
+          method: "POST",
+          body: formData,
+        });
+      }
 
       if (!response.ok) {
         const errorText = await response.json().catch(() => ({ detail: "Неизвестная ошибка" }));
@@ -316,7 +414,7 @@ export default function Home() {
               style={{ maxWidth: "100%", margin: "0 auto" }}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={handleUploadClick}
             >
               <input 
                 type="file"
@@ -335,9 +433,16 @@ export default function Home() {
                   padding: "0.75rem 1.5rem",
                   borderRadius: "0.5rem",
                   display: "inline-block",
-                  border: "1px solid var(--border-color)"
+                  border: "1px solid var(--border-color)",
+                  maxWidth: "100%",
+                  wordBreak: "break-all"
                 }}>
-                  📄 <strong>Выбран файл:</strong> {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                  📄 <strong>Выбран файл:</strong> {file.name} {file.size > 0 && `(${(file.size / (1024 * 1024)).toFixed(2)} MB)`}
+                  {localFilePath && (
+                    <div style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                      <strong>Путь на диске:</strong> {localFilePath}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -33,3 +33,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+
+# Tauri / Rust
+catcut-frontend/src-tauri/target/
+catcut-frontend/src-tauri/gen/
+
