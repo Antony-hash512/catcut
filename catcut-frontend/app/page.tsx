@@ -25,6 +25,8 @@ const hexToRgba = (hex: string, opacity: number) => {
   return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 };
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export default function Home() {
   const [step, setStep] = useState<"upload" | "loading" | "editor">("upload");
   const [file, setFile] = useState<File | null>(null);
@@ -209,7 +211,7 @@ export default function Home() {
                 setStep("upload");
 
                 // Use the FastAPI endpoint which properly handles HTTP Range requests for video seeking
-                const url = `http://localhost:8000/api/stream-file?file_path=${encodeURIComponent(filePath)}`;
+                const url = `${API_URL}/api/stream-file?file_path=${encodeURIComponent(filePath)}`;
                 setMediaUrl(url);
               }
             }
@@ -233,7 +235,7 @@ export default function Home() {
   // Fetch models list on startup
   const fetchModels = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/models");
+      const response = await fetch(`${API_URL}/api/models`);
       if (response.ok) {
         const data = await response.json();
         setModelsList(data);
@@ -264,7 +266,7 @@ export default function Home() {
     setModelsList(prev => prev.map(m => m.name === modelName ? { ...m, status: "downloading" } : m));
 
     try {
-      const response = await fetch("http://localhost:8000/api/models/download", {
+      const response = await fetch(`${API_URL}/api/models/download`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ model_name: modelName }),
@@ -333,7 +335,7 @@ export default function Home() {
           setStep("upload");
 
           // Use the FastAPI endpoint which properly handles HTTP Range requests for video seeking
-          const url = `http://localhost:8000/api/stream-file?file_path=${encodeURIComponent(filePath)}`;
+          const url = `${API_URL}/api/stream-file?file_path=${encodeURIComponent(filePath)}`;
           setMediaUrl(url);
         }
       } catch (err) {
@@ -356,7 +358,7 @@ export default function Home() {
       let response;
       if (localFilePath) {
         // Direct local path transcription (bypassing file upload)
-        response = await fetch("http://localhost:8000/api/transcribe-path", {
+        response = await fetch(`${API_URL}/api/transcribe-path`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -370,7 +372,7 @@ export default function Home() {
         // Standard multipart file upload
         const formData = new FormData();
         formData.append("file", file!);
-        response = await fetch(`http://localhost:8000/api/transcribe?model_name=${selectedModel}`, {
+        response = await fetch(`${API_URL}/api/transcribe?model_name=${selectedModel}`, {
           method: "POST",
           body: formData,
         });
@@ -649,7 +651,7 @@ export default function Home() {
     if (words.length === 0) return;
 
     try {
-      const response = await fetch("http://localhost:8000/api/generate-ass", {
+      const response = await fetch(`${API_URL}/api/generate-ass`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
