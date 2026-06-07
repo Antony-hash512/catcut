@@ -48,7 +48,7 @@ cd ~/git/catcut/catcut-backend
 ```
 Активируйте виртуальное окружение:
 
-| Для Fish | Для Bash |
+| Для Fish | Для Bash или Zsh |
 | :--- | :--- |
 | `source .venv/bin/activate.fish` | `source .venv/bin/activate` |
 
