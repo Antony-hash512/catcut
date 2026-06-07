@@ -115,7 +115,7 @@ export default function Home() {
 
   // AI Models state
   const [modelsList, setModelsList] = useState<ModelItem[]>([]);
-  const [selectedModel, setSelectedModel] = useState("small");
+  const [selectedModel, setSelectedModel] = useState("large-v3");
 
   // Styling settings
   const [fontName, setFontName] = useState("Montserrat");
