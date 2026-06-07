@@ -122,6 +122,12 @@ export default function Home() {
   const [fontSize, setFontSize] = useState(26);
   const [verticalShift, setVerticalShift] = useState(0);
   const [bgOpacity, setBgOpacity] = useState(80);
+  const [outlineColor, setOutlineColor] = useState("#000000");
+  const [shadowColor, setShadowColor] = useState("#000000");
+  const [bgColor, setBgColor] = useState("#000000");
+  const [outlineEnabled, setOutlineEnabled] = useState(true);
+  const [shadowEnabled, setShadowEnabled] = useState(true);
+  const [bgEnabled, setBgEnabled] = useState(false);
   const [activeColor, setActiveColor] = useState("#FFD700"); // Yellow
   const [inactiveColor, setInactiveColor] = useState("#FFFFFF"); // White
   const [styleMode, setStyleMode] = useState<"active_word" | "karaoke">("active_word");
@@ -547,6 +553,12 @@ export default function Home() {
           max_gap_seconds: maxGapSeconds,
           vertical_shift: verticalShift,
           bg_opacity: bgOpacity,
+          outline_color: outlineColor,
+          shadow_color: shadowColor,
+          bg_color: bgColor,
+          outline_enabled: outlineEnabled,
+          shadow_enabled: shadowEnabled,
+          bg_enabled: bgEnabled,
         }),
       });
 
@@ -928,6 +940,84 @@ export default function Home() {
                 onChange={(e) => setBgOpacity(Number(e.target.value))}
                 style={{ width: "100%" }}
               />
+            </div>
+
+            {/* Outline Controls */}
+            <div className="form-group">
+              <label className="checkbox-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={outlineEnabled}
+                  onChange={(e) => setOutlineEnabled(e.target.checked)}
+                  style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                />
+                <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>Обводка текста</span>
+              </label>
+              {outlineEnabled && (
+                <div className="color-picker-container">
+                  <div className="color-picker-preview" style={{ backgroundColor: outlineColor }}>
+                    <input
+                      type="color"
+                      className="color-picker-input"
+                      value={outlineColor}
+                      onChange={(e) => setOutlineColor(e.target.value)}
+                    />
+                  </div>
+                  <span className="color-hex-text">{outlineColor.toUpperCase()}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Shadow Controls */}
+            <div className="form-group">
+              <label className="checkbox-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={shadowEnabled}
+                  onChange={(e) => setShadowEnabled(e.target.checked)}
+                  style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                />
+                <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>Тень текста</span>
+              </label>
+              {shadowEnabled && (
+                <div className="color-picker-container">
+                  <div className="color-picker-preview" style={{ backgroundColor: shadowColor }}>
+                    <input
+                      type="color"
+                      className="color-picker-input"
+                      value={shadowColor}
+                      onChange={(e) => setShadowColor(e.target.value)}
+                    />
+                  </div>
+                  <span className="color-hex-text">{shadowColor.toUpperCase()}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Background Controls */}
+            <div className="form-group">
+              <label className="checkbox-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={bgEnabled}
+                  onChange={(e) => setBgEnabled(e.target.checked)}
+                  style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                />
+                <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>Задний фон (плашка)</span>
+              </label>
+              {bgEnabled && (
+                <div className="color-picker-container">
+                  <div className="color-picker-preview" style={{ backgroundColor: bgColor }}>
+                    <input
+                      type="color"
+                      className="color-picker-input"
+                      value={bgColor}
+                      onChange={(e) => setBgColor(e.target.value)}
+                    />
+                  </div>
+                  <span className="color-hex-text">{bgColor.toUpperCase()}</span>
+                </div>
+              )}
             </div>
 
             {/* Subtitle Style Type */}
