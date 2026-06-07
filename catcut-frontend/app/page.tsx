@@ -22,6 +22,7 @@ export default function Home() {
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [words, setWords] = useState<WordItem[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isTauri, setIsTauri] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
 
   // Load theme from localStorage
@@ -35,12 +36,35 @@ export default function Home() {
   // Apply theme and setup media listeners
   useEffect(() => {
     localStorage.setItem("theme", theme);
+    
+    let active = true;
 
-    const applyTheme = (themeName: "light" | "dark" | "system") => {
+    const applyTheme = async (themeName: "light" | "dark" | "system") => {
       const root = document.documentElement;
       if (themeName === "system") {
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        root.setAttribute("data-theme", systemTheme);
+        let systemTheme: "light" | "dark" = "dark";
+        if (isTauri) {
+          try {
+            const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+            const tauriTheme = await getCurrentWebviewWindow().theme();
+            if (active) {
+              if (tauriTheme === "light" || tauriTheme === "dark") {
+                systemTheme = tauriTheme;
+              } else {
+                // Default to dark for Linux Tauri if OS theme is not detected (returns null)
+                systemTheme = "dark";
+              }
+            }
+          } catch (err) {
+            console.error("Failed to get Tauri window theme:", err);
+            systemTheme = "dark";
+          }
+        } else {
+          systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        if (active) {
+          root.setAttribute("data-theme", systemTheme);
+        }
       } else {
         root.setAttribute("data-theme", themeName);
       }
@@ -48,17 +72,46 @@ export default function Home() {
 
     applyTheme(theme);
 
+    let unlistenTauriTheme: (() => void) | undefined;
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    
+    const handleWebSystemThemeChange = () => {
+      applyTheme("system");
+    };
+
     if (theme === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const handleSystemThemeChange = () => {
-        applyTheme("system");
-      };
-      mediaQuery.addEventListener("change", handleSystemThemeChange);
-      return () => {
-        mediaQuery.removeEventListener("change", handleSystemThemeChange);
-      };
+      // Always listen to mediaQuery change event as a fallback
+      mediaQuery.addEventListener("change", handleWebSystemThemeChange);
+
+      if (isTauri) {
+        import("@tauri-apps/api/webviewWindow").then(({ getCurrentWebviewWindow }) => {
+          if (!active) return;
+          getCurrentWebviewWindow().onThemeChanged(({ payload: newTauriTheme }) => {
+            if (!active) return;
+            if (newTauriTheme === "light" || newTauriTheme === "dark") {
+              document.documentElement.setAttribute("data-theme", newTauriTheme);
+            } else {
+              // Fallback to media query if OS payload is null/undetermined
+              const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+              document.documentElement.setAttribute("data-theme", systemTheme);
+            }
+          }).then(unlisten => {
+            unlistenTauriTheme = unlisten;
+          });
+        }).catch(err => {
+          console.error("Failed to load Tauri webviewWindow API for theme:", err);
+        });
+      }
     }
-  }, [theme]);
+
+    return () => {
+      active = false;
+      if (unlistenTauriTheme) {
+        unlistenTauriTheme();
+      }
+      mediaQuery.removeEventListener("change", handleWebSystemThemeChange);
+    };
+  }, [theme, isTauri]);
 
   // AI Models state
   const [modelsList, setModelsList] = useState<ModelItem[]>([]);
@@ -80,7 +133,6 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Tauri integration states
-  const [isTauri, setIsTauri] = useState(false);
   const [showTauriWarning, setShowTauriWarning] = useState(true); // Show/hide the warning banner 
   const [localFilePath, setLocalFilePath] = useState<string | null>(null);
 
