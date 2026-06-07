@@ -16,6 +16,15 @@ interface ModelItem {
   status: "idle" | "downloading" | "completed" | string;
 }
 
+const hexToRgba = (hex: string, opacity: number) => {
+  const cleanHex = hex.replace("#", "");
+  const num = parseInt(cleanHex, 16);
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
+
 export default function Home() {
   const [step, setStep] = useState<"upload" | "loading" | "editor">("upload");
   const [file, setFile] = useState<File | null>(null);
@@ -135,6 +144,7 @@ export default function Home() {
   const [maxGapSeconds, setMaxGapSeconds] = useState(0.8);
 
   const [currentTime, setCurrentTime] = useState(0);
+  const [videoAspectRatio, setVideoAspectRatio] = useState<string>("16/9");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const mediaRef = useRef<HTMLVideoElement | null>(null);
@@ -503,6 +513,105 @@ export default function Home() {
     if (mediaRef.current) {
       setCurrentTime(mediaRef.current.currentTime);
     }
+  };
+
+  const getActiveLine = (): WordItem[] | null => {
+    const lines = getGroupedLines();
+    for (const line of lines) {
+      if (line.length === 0) continue;
+      const activeWords = line.filter(w => !w.deactivated);
+      if (activeWords.length === 0) continue;
+
+      const lineStart = activeWords[0].start;
+      const lineEnd = activeWords[activeWords.length - 1].end;
+
+      if (currentTime >= lineStart && currentTime <= lineEnd) {
+        return line;
+      }
+    }
+    return null;
+  };
+
+  const renderCSSSubtitles = () => {
+    const activeLine = getActiveLine();
+    if (!activeLine) return null;
+
+    const visibleWords = activeLine.filter(w => !w.deactivated);
+    if (visibleWords.length === 0) return null;
+
+    const shadows: string[] = [];
+    if (outlineEnabled) {
+      const thicknesses = [1, 2, 3];
+      thicknesses.forEach((t) => {
+        shadows.push(
+          `-${t}px -${t}px 0 ${outlineColor}`,
+          `${t}px -${t}px 0 ${outlineColor}`,
+          `-${t}px ${t}px 0 ${outlineColor}`,
+          `${t}px ${t}px 0 ${outlineColor}`,
+          `0px -${t}px 0 ${outlineColor}`,
+          `0px ${t}px 0 ${outlineColor}`,
+          `-${t}px 0px 0 ${outlineColor}`,
+          `${t}px 0px 0 ${outlineColor}`
+        );
+      });
+    }
+    if (shadowEnabled) {
+      shadows.push(`3px 3px 6px ${shadowColor}`);
+    }
+    const textShadowStyle = shadows.length > 0 ? shadows.join(", ") : "none";
+
+    const topPosition = `calc(50% + ${(verticalShift / 1080) * 100}%)`;
+
+    return (
+      <div
+        style={{
+          position: "absolute",
+          top: topPosition,
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          alignItems: "center",
+          width: "90%",
+          textAlign: "center",
+          pointerEvents: "none",
+          padding: "0.25rem 0.75rem",
+          borderRadius: "0.5rem",
+          backgroundColor: bgEnabled ? hexToRgba(bgColor, bgOpacity / 100) : "transparent",
+          fontFamily: fontName || "sans-serif",
+          fontSize: `calc(${fontSize} / 1080 * 100cqh)`,
+          fontWeight: 800,
+          lineHeight: 1.2,
+          transition: "all 0.1s ease",
+          zIndex: 20
+        }}
+      >
+        {visibleWords.map((word) => {
+          let isWordActive = false;
+          if (styleMode === "active_word") {
+            isWordActive = currentTime >= word.start && currentTime <= word.end;
+          } else if (styleMode === "karaoke") {
+            isWordActive = currentTime >= word.start;
+          }
+
+          return (
+            <span
+              key={word.id}
+              style={{
+                color: isWordActive ? activeColor : inactiveColor,
+                textShadow: textShadowStyle,
+                margin: "0 0.25em",
+                whiteSpace: "nowrap",
+                transition: "color 0.1s ease",
+              }}
+            >
+              {word.word}
+            </span>
+          );
+        })}
+      </div>
+    );
   };
 
   // Grouping logic for visualization on screen
@@ -1095,18 +1204,58 @@ export default function Home() {
             {mediaUrl && (
               <div style={{ marginTop: "2rem" }}>
                 <h4 className="form-label" style={{ marginBottom: "0.5rem" }}>Предпросмотр аудио/видео</h4>
-                <video
-                  ref={mediaRef}
-                  src={mediaUrl}
-                  controls
-                  onTimeUpdate={handleTimeUpdate}
+                <div 
+                  className="video-wrapper-container"
                   style={{
+                    position: "relative",
                     width: "100%",
                     borderRadius: "0.75rem",
+                    overflow: "hidden",
                     border: "1px solid var(--border-color)",
-                    background: "#000"
+                    background: "#000",
+                    containerType: "size",
+                    aspectRatio: videoAspectRatio,
                   }}
-                />
+                >
+                  <video
+                    ref={mediaRef}
+                    src={mediaUrl}
+                    controls
+                    onTimeUpdate={handleTimeUpdate}
+                    onLoadedMetadata={(e) => {
+                      const video = e.currentTarget;
+                      if (video.videoWidth && video.videoHeight) {
+                        setVideoAspectRatio(`${video.videoWidth} / ${video.videoHeight}`);
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      display: "block"
+                    }}
+                  />
+                  
+                  {/* CSS/DOM Overlay */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      pointerEvents: "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      overflow: "hidden",
+                      zIndex: 10
+                    }}
+                  >
+                    {renderCSSSubtitles()}
+                  </div>
+                </div>
               </div>
             )}
           </aside>
