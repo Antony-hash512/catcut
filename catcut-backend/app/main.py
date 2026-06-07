@@ -39,6 +39,13 @@ class ASSGenerateRequest(BaseModel):
     vertical_shift: Optional[int] = 0
     bg_opacity: Optional[int] = 80
     font_bold: Optional[bool] = True
+    outline_color: Optional[str] = "#000000"
+    shadow_color: Optional[str] = "#000000"
+    bg_color: Optional[str] = "#000000"
+    outline_enabled: Optional[bool] = True
+    outline_width: Optional[float] = 3.0
+    shadow_enabled: Optional[bool] = False
+    bg_enabled: Optional[bool] = False
 
 # Ensure temporary upload directory exists
 TEMP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temp")
@@ -276,7 +283,14 @@ async def api_generate_ass(request: ASSGenerateRequest):
             max_gap_seconds=request.max_gap_seconds,
             vertical_shift=request.vertical_shift,
             bg_opacity=request.bg_opacity,
-            font_bold=request.font_bold
+            font_bold=request.font_bold,
+            outline_enabled=request.outline_enabled,
+            outline_width=request.outline_width,
+            outline_color_hex=request.outline_color,
+            shadow_enabled=request.shadow_enabled,
+            shadow_color_hex=request.shadow_color,
+            bg_enabled=request.bg_enabled,
+            bg_color_hex=request.bg_color
         )
         
         # Stream file response

@@ -37,6 +37,18 @@ def group_words_into_lines(words: List[Dict[str, Any]], max_words: int = 3, max_
         
     return lines
 
+def hex_to_pysubs2_color(hex_color: str, alpha: int = 0) -> pysubs2.Color:
+    """
+    Converts a standard hex color to pysubs2.Color object.
+    """
+    hex_color = hex_color.lstrip('#')
+    if len(hex_color) == 6:
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+        return pysubs2.Color(r, g, b, alpha)
+    return pysubs2.Color(0, 0, 0, alpha)
+
 def build_ass(
     words_data: List[Dict[str, Any]],
     font_name: str = "Montserrat",
@@ -48,7 +60,14 @@ def build_ass(
     max_gap_seconds: float = 0.8,
     vertical_shift: int = 0,
     bg_opacity: int = 80,
-    font_bold: bool = True
+    font_bold: bool = True,
+    outline_enabled: bool = True,
+    outline_width: float = 3.0,
+    outline_color_hex: str = "#000000",
+    shadow_enabled: bool = False,
+    shadow_color_hex: str = "#000000",
+    bg_enabled: bool = False,
+    bg_color_hex: str = "#000000"
 ) -> str:
     """
     Generates ASS subtitle content from words data.
@@ -67,14 +86,19 @@ def build_ass(
     style.bold = font_bold
     style.primarycolor = pysubs2.Color(255, 255, 255) # Default primary
     style.secondarycolor = pysubs2.Color(0, 215, 255) # Default secondary for karaoke
-    style.outlinecolor = pysubs2.Color(0, 0, 0)
     
-    # Convert bg_opacity (0-100) to transparency alpha (255-0)
-    bg_alpha = int(round((100 - bg_opacity) * 2.55))
-    style.backcolor = pysubs2.Color(0, 0, 0, bg_alpha)
+    style.outlinecolor = hex_to_pysubs2_color(outline_color_hex)
     
-    style.outline = 3.0
-    style.shadow = 1.0
+    if bg_enabled:
+        style.borderstyle = 3  # Opaque box background
+        bg_alpha = int(round((100 - bg_opacity) * 2.55))
+        style.backcolor = hex_to_pysubs2_color(bg_color_hex, bg_alpha)
+    else:
+        style.borderstyle = 1  # Outline + shadow
+        style.backcolor = hex_to_pysubs2_color(shadow_color_hex)
+        
+    style.outline = outline_width if outline_enabled else 0.0
+    style.shadow = 1.0 if shadow_enabled else 0.0
     style.alignment = 5 # Center-middle alignment
     ssa.styles["Default"] = style
     

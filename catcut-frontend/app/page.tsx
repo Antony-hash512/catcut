@@ -167,6 +167,7 @@ export default function Home() {
   const [verticalShift, setVerticalShift] = useState(0);
   const [bgOpacity, setBgOpacity] = useState(80);
   const [outlineColor, setOutlineColor] = useState("#000000");
+  const [outlineWidth, setOutlineWidth] = useState(3);
   const [shadowColor, setShadowColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#000000");
   const [outlineEnabled, setOutlineEnabled] = useState(true);
@@ -578,8 +579,7 @@ export default function Home() {
 
     const shadows: string[] = [];
     if (outlineEnabled) {
-      const thicknesses = [1, 2, 3];
-      thicknesses.forEach((t) => {
+      for (let t = 1; t <= outlineWidth; t++) {
         shadows.push(
           `-${t}px -${t}px 0 ${outlineColor}`,
           `${t}px -${t}px 0 ${outlineColor}`,
@@ -590,7 +590,7 @@ export default function Home() {
           `-${t}px 0px 0 ${outlineColor}`,
           `${t}px 0px 0 ${outlineColor}`
         );
-      });
+      }
     }
     if (shadowEnabled) {
       shadows.push(`3px 3px 6px ${shadowColor}`);
@@ -701,6 +701,7 @@ export default function Home() {
           bg_opacity: bgOpacity,
           font_bold: fontBold,
           outline_color: outlineColor,
+          outline_width: outlineWidth,
           shadow_color: shadowColor,
           bg_color: bgColor,
           outline_enabled: outlineEnabled,
@@ -1056,7 +1057,7 @@ export default function Home() {
               <input
                 type="range"
                 min="14"
-                max="50"
+                max="150"
                 value={fontSize}
                 onChange={(e) => setFontSize(Number(e.target.value))}
                 style={{ width: "100%" }}
@@ -1158,16 +1159,31 @@ export default function Home() {
                 <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>Обводка текста</span>
               </label>
               {outlineEnabled && (
-                <div className="color-picker-container">
-                  <div className="color-picker-preview" style={{ backgroundColor: outlineColor }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.5rem" }}>
+                  <div className="color-picker-container">
+                    <div className="color-picker-preview" style={{ backgroundColor: outlineColor }}>
+                      <input
+                        type="color"
+                        className="color-picker-input"
+                        value={outlineColor}
+                        onChange={(e) => setOutlineColor(e.target.value)}
+                      />
+                    </div>
+                    <span className="color-hex-text">{outlineColor.toUpperCase()}</span>
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: "0.85rem", color: "var(--text-muted)", display: "block", marginBottom: "0.25rem" }}>
+                      Толщина обводки: {outlineWidth}
+                    </label>
                     <input
-                      type="color"
-                      className="color-picker-input"
-                      value={outlineColor}
-                      onChange={(e) => setOutlineColor(e.target.value)}
+                      type="range"
+                      min="1"
+                      max="20"
+                      value={outlineWidth}
+                      onChange={(e) => setOutlineWidth(Number(e.target.value))}
+                      style={{ width: "100%" }}
                     />
                   </div>
-                  <span className="color-hex-text">{outlineColor.toUpperCase()}</span>
                 </div>
               )}
             </div>
