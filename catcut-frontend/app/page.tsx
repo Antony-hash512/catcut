@@ -32,12 +32,12 @@ const adjustWordTimings = (wordsList: WordItem[], minDuration: number): WordItem
   // Deep copy to avoid mutating original objects
   const adjusted = wordsList.map(w => ({ ...w }));
   const n = adjusted.length;
-  
+
   for (let i = 0; i < n; i++) {
     const duration = adjusted[i].end - adjusted[i].start;
     if (duration < minDuration) {
       adjusted[i].end = adjusted[i].start + minDuration;
-      
+
       // Propagate potential overlaps to subsequent words
       for (let j = i + 1; j < n; j++) {
         if (adjusted[j - 1].end > adjusted[j].start) {
@@ -50,7 +50,7 @@ const adjustWordTimings = (wordsList: WordItem[], minDuration: number): WordItem
       }
     }
   }
-  
+
   // Format numbers to 2 decimal places to keep them clean
   return adjusted.map(w => ({
     ...w,
@@ -177,7 +177,7 @@ export default function Home() {
   const [styleMode, setStyleMode] = useState<"active_word" | "karaoke">("active_word");
   const [maxWordsPerLine, setMaxWordsPerLine] = useState(3);
   const [maxGapSeconds, setMaxGapSeconds] = useState(0.8);
-  const [minWordDuration, setMinWordDuration] = useState(0.15); // Default 0.15 seconds
+  const [minWordDuration, setMinWordDuration] = useState(0.25);
 
   const [currentTime, setCurrentTime] = useState(0);
   const [videoAspectRatio, setVideoAspectRatio] = useState<string>("16/9");
