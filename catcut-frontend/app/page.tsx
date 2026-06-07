@@ -36,7 +36,7 @@ export default function Home() {
   // Apply theme and setup media listeners
   useEffect(() => {
     localStorage.setItem("theme", theme);
-    
+
     let active = true;
 
     const applyTheme = async (themeName: "light" | "dark" | "system") => {
@@ -74,7 +74,7 @@ export default function Home() {
 
     let unlistenTauriTheme: (() => void) | undefined;
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    
+
     const handleWebSystemThemeChange = () => {
       applyTheme("system");
     };
@@ -125,8 +125,8 @@ export default function Home() {
   const [outlineColor, setOutlineColor] = useState("#000000");
   const [shadowColor, setShadowColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#000000");
-  const [outlineEnabled, setOutlineEnabled] = useState(true);
-  const [shadowEnabled, setShadowEnabled] = useState(true);
+  const [outlineEnabled, setOutlineEnabled] = useState(false);
+  const [shadowEnabled, setShadowEnabled] = useState(false);
   const [bgEnabled, setBgEnabled] = useState(false);
   const [activeColor, setActiveColor] = useState("#FFD700"); // Yellow
   const [inactiveColor, setInactiveColor] = useState("#FFFFFF"); // White
@@ -942,6 +942,50 @@ export default function Home() {
               />
             </div>
 
+            {/* Subtitle Style Type */}
+            <div className="form-group">
+              <label className="form-label">Стиль анимации</label>
+              <select
+                className="form-control"
+                value={styleMode}
+                onChange={(e) => setStyleMode(e.target.value as any)}
+              >
+                <option value="active_word">Active Word (Highlight текущего слова)</option>
+                <option value="karaoke">Karaoke (Заполнение цветом в строке)</option>
+              </select>
+            </div>
+
+            {/* Inactive Word Color */}
+            <div className="form-group">
+              <label className="form-label">Цвет обычного текста</label>
+              <div className="color-picker-container">
+                <div className="color-picker-preview" style={{ backgroundColor: inactiveColor }}>
+                  <input
+                    type="color"
+                    className="color-picker-input"
+                    value={inactiveColor}
+                    onChange={(e) => setInactiveColor(e.target.value)}
+                  />
+                </div>
+                <span className="color-hex-text">{inactiveColor.toUpperCase()}</span>
+              </div>
+            </div>
+
+            {/* Active Word Highlight Color */}
+            <div className="form-group">
+              <label className="form-label">Цвет активного слова</label>
+              <div className="color-picker-container">
+                <div className="color-picker-preview" style={{ backgroundColor: activeColor }}>
+                  <input
+                    type="color"
+                    className="color-picker-input"
+                    value={activeColor}
+                    onChange={(e) => setActiveColor(e.target.value)}
+                  />
+                </div>
+                <span className="color-hex-text">{activeColor.toUpperCase()}</span>
+              </div>
+            </div>
             {/* Outline Controls */}
             <div className="form-group">
               <label className="checkbox-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem", cursor: "pointer" }}>
@@ -1019,52 +1063,6 @@ export default function Home() {
                 </div>
               )}
             </div>
-
-            {/* Subtitle Style Type */}
-            <div className="form-group">
-              <label className="form-label">Стиль анимации</label>
-              <select
-                className="form-control"
-                value={styleMode}
-                onChange={(e) => setStyleMode(e.target.value as any)}
-              >
-                <option value="active_word">Active Word (Highlight текущего слова)</option>
-                <option value="karaoke">Karaoke (Заполнение цветом в строке)</option>
-              </select>
-            </div>
-
-            {/* Inactive Word Color */}
-            <div className="form-group">
-              <label className="form-label">Цвет обычного текста</label>
-              <div className="color-picker-container">
-                <div className="color-picker-preview" style={{ backgroundColor: inactiveColor }}>
-                  <input
-                    type="color"
-                    className="color-picker-input"
-                    value={inactiveColor}
-                    onChange={(e) => setInactiveColor(e.target.value)}
-                  />
-                </div>
-                <span className="color-hex-text">{inactiveColor.toUpperCase()}</span>
-              </div>
-            </div>
-
-            {/* Active Word Highlight Color */}
-            <div className="form-group">
-              <label className="form-label">Цвет активного слова</label>
-              <div className="color-picker-container">
-                <div className="color-picker-preview" style={{ backgroundColor: activeColor }}>
-                  <input
-                    type="color"
-                    className="color-picker-input"
-                    value={activeColor}
-                    onChange={(e) => setActiveColor(e.target.value)}
-                  />
-                </div>
-                <span className="color-hex-text">{activeColor.toUpperCase()}</span>
-              </div>
-            </div>
-
             {/* Grouping parameters */}
             <div className="flex-inputs">
               <div className="form-group">
