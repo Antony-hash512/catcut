@@ -134,7 +134,7 @@ export default function Home() {
   const [outlineColor, setOutlineColor] = useState("#000000");
   const [shadowColor, setShadowColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#000000");
-  const [outlineEnabled, setOutlineEnabled] = useState(false);
+  const [outlineEnabled, setOutlineEnabled] = useState(true);
   const [shadowEnabled, setShadowEnabled] = useState(false);
   const [bgEnabled, setBgEnabled] = useState(false);
   const [activeColor, setActiveColor] = useState("#FFD700"); // Yellow
@@ -1204,7 +1204,7 @@ export default function Home() {
             {mediaUrl && (
               <div style={{ marginTop: "2rem" }}>
                 <h4 className="form-label" style={{ marginBottom: "0.5rem" }}>Предпросмотр аудио/видео</h4>
-                <div 
+                <div
                   className="video-wrapper-container"
                   style={{
                     position: "relative",
@@ -1235,7 +1235,7 @@ export default function Home() {
                       display: "block"
                     }}
                   />
-                  
+
                   {/* CSS/DOM Overlay */}
                   <div
                     style={{
