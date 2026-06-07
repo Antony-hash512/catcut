@@ -27,6 +27,38 @@ const hexToRgba = (hex: string, opacity: number) => {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+// Helper function to enforce minimum word duration and shift overlapping words
+const adjustWordTimings = (wordsList: WordItem[], minDuration: number): WordItem[] => {
+  // Deep copy to avoid mutating original objects
+  const adjusted = wordsList.map(w => ({ ...w }));
+  const n = adjusted.length;
+  
+  for (let i = 0; i < n; i++) {
+    const duration = adjusted[i].end - adjusted[i].start;
+    if (duration < minDuration) {
+      adjusted[i].end = adjusted[i].start + minDuration;
+      
+      // Propagate potential overlaps to subsequent words
+      for (let j = i + 1; j < n; j++) {
+        if (adjusted[j - 1].end > adjusted[j].start) {
+          const overlap = adjusted[j - 1].end - adjusted[j].start;
+          adjusted[j].start += overlap;
+          adjusted[j].end += overlap;
+        } else {
+          break;
+        }
+      }
+    }
+  }
+  
+  // Format numbers to 2 decimal places to keep them clean
+  return adjusted.map(w => ({
+    ...w,
+    start: Number(w.start.toFixed(2)),
+    end: Number(w.end.toFixed(2))
+  }));
+};
+
 export default function Home() {
   const [step, setStep] = useState<"upload" | "loading" | "editor">("upload");
   const [file, setFile] = useState<File | null>(null);
@@ -145,6 +177,7 @@ export default function Home() {
   const [styleMode, setStyleMode] = useState<"active_word" | "karaoke">("active_word");
   const [maxWordsPerLine, setMaxWordsPerLine] = useState(3);
   const [maxGapSeconds, setMaxGapSeconds] = useState(0.8);
+  const [minWordDuration, setMinWordDuration] = useState(0.15); // Default 0.15 seconds
 
   const [currentTime, setCurrentTime] = useState(0);
   const [videoAspectRatio, setVideoAspectRatio] = useState<string>("16/9");
@@ -404,7 +437,8 @@ export default function Home() {
         });
       }
 
-      setWords(allWords);
+      const adjustedWords = adjustWordTimings(allWords, minWordDuration);
+      setWords(adjustedWords);
       setStep("editor");
     } catch (err: any) {
       console.error(err);
@@ -1214,6 +1248,29 @@ export default function Home() {
                   value={maxGapSeconds}
                   onChange={(e) => setMaxGapSeconds(Math.max(0.1, Number(e.target.value)))}
                 />
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginTop: "1rem" }}>
+              <label className="form-label">Минимальная длительность слова (сек): {minWordDuration}</label>
+              <div style={{ display: "flex", gap: "0.75rem" }}>
+                <input
+                  type="number"
+                  className="form-control"
+                  step="0.05"
+                  min="0.01"
+                  max="2.0"
+                  value={minWordDuration}
+                  onChange={(e) => setMinWordDuration(Math.max(0.01, parseFloat(e.target.value) || 0.01))}
+                />
+                <button
+                  className="line-action-btn"
+                  style={{ whiteSpace: "nowrap", padding: "0 1rem" }}
+                  onClick={() => setWords(prev => adjustWordTimings(prev, minWordDuration))}
+                  title="Применить минимальную длительность и скорректировать наложения для всех слов"
+                >
+                  Применить
+                </button>
               </div>
             </div>
 
