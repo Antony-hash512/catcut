@@ -166,6 +166,7 @@ export default function Home() {
   const [fontBold, setFontBold] = useState(true);
   const [verticalShift, setVerticalShift] = useState(0);
   const [bgOpacity, setBgOpacity] = useState(80);
+  const [textOpacity, setTextOpacity] = useState(100);
   const [outlineColor, setOutlineColor] = useState("#000000");
   const [outlineWidth, setOutlineWidth] = useState(3);
   const [shadowColor, setShadowColor] = useState("#000000");
@@ -632,11 +633,14 @@ export default function Home() {
             isWordActive = currentTime >= word.start;
           }
 
+          const baseColor = isWordActive ? activeColor : inactiveColor;
+          const displayColor = hexToRgba(baseColor, textOpacity / 100);
+
           return (
             <span
               key={word.id}
               style={{
-                color: isWordActive ? activeColor : inactiveColor,
+                color: displayColor,
                 textShadow: textShadowStyle,
                 margin: "0 0.25em",
                 whiteSpace: "nowrap",
@@ -699,6 +703,7 @@ export default function Home() {
           max_gap_seconds: maxGapSeconds,
           vertical_shift: verticalShift,
           bg_opacity: bgOpacity,
+          text_opacity: textOpacity,
           font_bold: fontBold,
           outline_color: outlineColor,
           outline_width: outlineWidth,
@@ -1090,15 +1095,15 @@ export default function Home() {
               />
             </div>
 
-            {/* Background Opacity */}
+            {/* Text Opacity */}
             <div className="form-group">
-              <label className="form-label">Прозрачность фона субтитров: {bgOpacity}%</label>
+              <label className="form-label">Прозрачность текста: {textOpacity}%</label>
               <input
                 type="range"
                 min="0"
                 max="100"
-                value={bgOpacity}
-                onChange={(e) => setBgOpacity(Number(e.target.value))}
+                value={textOpacity}
+                onChange={(e) => setTextOpacity(Number(e.target.value))}
                 style={{ width: "100%" }}
               />
             </div>
@@ -1226,16 +1231,31 @@ export default function Home() {
                 <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>Задний фон (плашка)</span>
               </label>
               {bgEnabled && (
-                <div className="color-picker-container">
-                  <div className="color-picker-preview" style={{ backgroundColor: bgColor }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.5rem" }}>
+                  <div className="color-picker-container">
+                    <div className="color-picker-preview" style={{ backgroundColor: bgColor }}>
+                      <input
+                        type="color"
+                        className="color-picker-input"
+                        value={bgColor}
+                        onChange={(e) => setBgColor(e.target.value)}
+                      />
+                    </div>
+                    <span className="color-hex-text">{bgColor.toUpperCase()}</span>
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: "0.85rem", color: "var(--text-muted)", display: "block", marginBottom: "0.25rem" }}>
+                      Прозрачность фона: {bgOpacity}%
+                    </label>
                     <input
-                      type="color"
-                      className="color-picker-input"
-                      value={bgColor}
-                      onChange={(e) => setBgColor(e.target.value)}
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={bgOpacity}
+                      onChange={(e) => setBgOpacity(Number(e.target.value))}
+                      style={{ width: "100%" }}
                     />
                   </div>
-                  <span className="color-hex-text">{bgColor.toUpperCase()}</span>
                 </div>
               )}
             </div>

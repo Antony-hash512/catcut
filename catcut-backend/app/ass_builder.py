@@ -1,15 +1,15 @@
 import pysubs2
 from typing import List, Dict, Any
 
-def rgb_to_ass_color(hex_color: str) -> str:
+def rgb_to_ass_color(hex_color: str, alpha: int = 0) -> str:
     """
-    Converts a standard hex color (e.g., '#FFD700' or 'FFD700') to ASS BGR hex format (&H00BBGGRR&).
+    Converts a standard hex color (e.g., '#FFD700' or 'FFD700') to ASS BGR hex format (&HAABBGGRR&).
     """
     hex_color = hex_color.lstrip('#')
     if len(hex_color) == 6:
         r, g, b = hex_color[0:2], hex_color[2:4], hex_color[4:6]
-        return f"&H00{b}{g}{r}&"
-    return "&HFFFFFF&"
+        return f"&H{alpha:02X}{b}{g}{r}&"
+    return f"&H{alpha:02X}FFFFFF&"
 
 def group_words_into_lines(words: List[Dict[str, Any]], max_words: int = 3, max_gap: float = 0.8) -> List[List[Dict[str, Any]]]:
     """
@@ -60,6 +60,7 @@ def build_ass(
     max_gap_seconds: float = 0.8,
     vertical_shift: int = 0,
     bg_opacity: int = 80,
+    text_opacity: int = 100,
     font_bold: bool = True,
     outline_enabled: bool = True,
     outline_width: float = 3.0,
@@ -84,8 +85,9 @@ def build_ass(
     style.fontname = font_name
     style.fontsize = font_size
     style.bold = font_bold
-    style.primarycolor = pysubs2.Color(255, 255, 255) # Default primary
-    style.secondarycolor = pysubs2.Color(0, 215, 255) # Default secondary for karaoke
+    text_alpha = int(round((100 - text_opacity) * 2.55))
+    style.primarycolor = pysubs2.Color(255, 255, 255, text_alpha) # Default primary
+    style.secondarycolor = pysubs2.Color(0, 215, 255, text_alpha) # Default secondary for karaoke
     
     style.outlinecolor = hex_to_pysubs2_color(outline_color_hex)
     
@@ -105,8 +107,8 @@ def build_ass(
     # Group words into lines
     lines = group_words_into_lines(words_data, max_words=max_words_per_line, max_gap=max_gap_seconds)
     
-    active_color_ass = rgb_to_ass_color(active_color_hex)
-    inactive_color_ass = rgb_to_ass_color(inactive_color_hex)
+    active_color_ass = rgb_to_ass_color(active_color_hex, text_alpha)
+    inactive_color_ass = rgb_to_ass_color(inactive_color_hex, text_alpha)
     
     for line in lines:
         if not line:

@@ -38,6 +38,7 @@ class ASSGenerateRequest(BaseModel):
     max_gap_seconds: Optional[float] = 0.8
     vertical_shift: Optional[int] = 0
     bg_opacity: Optional[int] = 80
+    text_opacity: Optional[int] = 100
     font_bold: Optional[bool] = True
     outline_color: Optional[str] = "#000000"
     shadow_color: Optional[str] = "#000000"
@@ -283,6 +284,7 @@ async def api_generate_ass(request: ASSGenerateRequest):
             max_gap_seconds=request.max_gap_seconds,
             vertical_shift=request.vertical_shift,
             bg_opacity=request.bg_opacity,
+            text_opacity=request.text_opacity,
             font_bold=request.font_bold,
             outline_enabled=request.outline_enabled,
             outline_width=request.outline_width,
