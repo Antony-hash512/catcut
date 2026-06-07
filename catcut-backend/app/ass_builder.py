@@ -45,13 +45,19 @@ def build_ass(
     inactive_color_hex: str = "#FFFFFF",    # White
     style_mode: str = "active_word",         # "active_word" or "karaoke"
     max_words_per_line: int = 3,
-    max_gap_seconds: float = 0.8
+    max_gap_seconds: float = 0.8,
+    vertical_shift: int = 0,
+    bg_opacity: int = 80
 ) -> str:
     """
     Generates ASS subtitle content from words data.
     """
     # Create SSA file
     ssa = pysubs2.SSAFile()
+    
+    # Configure 1080p canvas resolution
+    ssa.info["PlayResX"] = 1920
+    ssa.info["PlayResY"] = 1080
     
     # Configure default style
     style = pysubs2.SSAStyle()
@@ -60,10 +66,14 @@ def build_ass(
     style.primarycolor = pysubs2.Color(255, 255, 255) # Default primary
     style.secondarycolor = pysubs2.Color(0, 215, 255) # Default secondary for karaoke
     style.outlinecolor = pysubs2.Color(0, 0, 0)
-    style.backcolor = pysubs2.Color(0, 0, 0, 150) # Semi-transparent shadow
+    
+    # Convert bg_opacity (0-100) to transparency alpha (255-0)
+    bg_alpha = int(round((100 - bg_opacity) * 2.55))
+    style.backcolor = pysubs2.Color(0, 0, 0, bg_alpha)
+    
     style.outline = 3.0
     style.shadow = 1.0
-    style.alignment = 5 # Center-middle alignment for typical short-form video placement (often 5 or 2)
+    style.alignment = 5 # Center-middle alignment
     ssa.styles["Default"] = style
     
     # Group words into lines
@@ -100,7 +110,7 @@ def build_ass(
                         # Inactive word
                         parts.append(f"{{\\c{inactive_color_ass}}}{word_text}")
                 
-                text = " ".join(parts)
+                text = f"{{\\pos(960,{540 + vertical_shift})}}" + " ".join(parts)
                 event = pysubs2.SSAEvent(start=event_start_ms, end=event_end_ms, text=text)
                 ssa.events.append(event)
                 
@@ -125,8 +135,8 @@ def build_ass(
                 current_time_ms = word_end_ms
                 
             text = " ".join(parts)
-            # Add secondary color override for active filling
-            text = f"{{\\c{inactive_color_ass}\\2c{active_color_ass}}}" + text
+            # Add secondary color override for active filling and positioning
+            text = f"{{\\pos(960,{540 + vertical_shift})}}{{\\c{inactive_color_ass}\\2c{active_color_ass}}}" + text
             
             event = pysubs2.SSAEvent(start=line_start_ms, end=line_end_ms, text=text)
             ssa.events.append(event)

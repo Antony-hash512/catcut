@@ -120,6 +120,8 @@ export default function Home() {
   // Styling settings
   const [fontName, setFontName] = useState("Montserrat");
   const [fontSize, setFontSize] = useState(26);
+  const [verticalShift, setVerticalShift] = useState(0);
+  const [bgOpacity, setBgOpacity] = useState(80);
   const [activeColor, setActiveColor] = useState("#FFD700"); // Yellow
   const [inactiveColor, setInactiveColor] = useState("#FFFFFF"); // White
   const [styleMode, setStyleMode] = useState<"active_word" | "karaoke">("active_word");
@@ -543,6 +545,8 @@ export default function Home() {
           style_mode: styleMode,
           max_words_per_line: maxWordsPerLine,
           max_gap_seconds: maxGapSeconds,
+          vertical_shift: verticalShift,
+          bg_opacity: bgOpacity,
         }),
       });
 
@@ -896,6 +900,32 @@ export default function Home() {
                 max="50"
                 value={fontSize}
                 onChange={(e) => setFontSize(Number(e.target.value))}
+                style={{ width: "100%" }}
+              />
+            </div>
+
+            {/* Vertical Position Shift */}
+            <div className="form-group">
+              <label className="form-label">Смещение по вертикали: {verticalShift > 0 ? `+${verticalShift}` : verticalShift}</label>
+              <input
+                type="range"
+                min="-500"
+                max="500"
+                value={verticalShift}
+                onChange={(e) => setVerticalShift(Number(e.target.value))}
+                style={{ width: "100%" }}
+              />
+            </div>
+
+            {/* Background Opacity */}
+            <div className="form-group">
+              <label className="form-label">Прозрачность фона субтитров: {bgOpacity}%</label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={bgOpacity}
+                onChange={(e) => setBgOpacity(Number(e.target.value))}
                 style={{ width: "100%" }}
               />
             </div>
