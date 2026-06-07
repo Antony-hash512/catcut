@@ -48,9 +48,13 @@ cd ~/git/catcut/catcut-backend
 ```
 Активируйте виртуальное окружение:
 
-| Для Fish | Для Bash или Zsh |
+| Интерпретатор / ОС | Команда активации |
 | :--- | :--- |
-| `source .venv/bin/activate.fish` | `source .venv/bin/activate` |
+| **Bash или Zsh** | `source .venv/bin/activate` |
+| **Fish** | `source .venv/bin/activate.fish` |
+| **Nushell** | `overlay use .venv/bin/nu-activate.nu` |
+| **PowerShell** | `.venv/bin/Activate.ps1` |
+| **cmd.exe (Windows)** | `.venv\Scripts\activate.bat` |
 
 Установаите пакеты Python:
 ```fish
