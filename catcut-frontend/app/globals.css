@@ -657,6 +657,13 @@ select.form-control option {
   position: relative;
   display: inline-flex;
   align-items: center;
+  gap: 0.5rem;
+}
+
+.theme-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .theme-select {

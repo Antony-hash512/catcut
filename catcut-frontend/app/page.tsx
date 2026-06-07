@@ -35,7 +35,7 @@ export default function Home() {
   // Apply theme and setup media listeners
   useEffect(() => {
     localStorage.setItem("theme", theme);
-    
+
     const applyTheme = (themeName: "light" | "dark" | "system") => {
       const root = document.documentElement;
       if (themeName === "system") {
@@ -99,7 +99,7 @@ export default function Home() {
         const message = event.reason.message || "";
         const isAbortError = name === "AbortError" || message.includes("The operation was aborted");
         const isVideoError = message.includes("play()") || message.includes("pause()") || message.includes("currentTime");
-        
+
         if (isAbortError || isVideoError) {
           console.warn("Muffled unhandled rejection from video playback:", event.reason);
           event.preventDefault();
@@ -539,13 +539,14 @@ export default function Home() {
           <h1 className="logo-cat">cat<span className="logo-cut">cut</span></h1>
           <span className="logo-badge">AI MVP</span>
         </div>
-        
+
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
           <div style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
             Генерация пословных субтитров
           </div>
-          
+
           <div className="theme-toggle-container">
+            <span className="theme-label">Тема оформления:</span>
             <select
               value={theme}
               onChange={(e) => setTheme(e.target.value as any)}
@@ -993,9 +994,9 @@ export default function Home() {
                             <div className="word-card-toolbar">
                               <button className="word-action-btn" title="Прослушать" onClick={() => playWordSegment(word)}>🔊</button>
                               <button className="word-action-btn" title="Добавить слово после" onClick={() => addWord(word.id, "after")}>➕</button>
-                              <button 
-                                className={`word-action-btn ${word.deactivated ? "deactivated-toggle" : ""}`} 
-                                title={word.deactivated ? "Активировать" : "Деактивировать"} 
+                              <button
+                                className={`word-action-btn ${word.deactivated ? "deactivated-toggle" : ""}`}
+                                title={word.deactivated ? "Активировать" : "Деактивировать"}
                                 onClick={() => toggleWordActive(word.id)}
                               >
                                 {word.deactivated ? "🚫" : "👁️"}
