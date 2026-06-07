@@ -48,7 +48,7 @@ cd ~/git/catcut/catcut-backend
 ```
 Активируйте виртуальное окружение:
 
-| Интерпретатор / ОС | Команда активации |
+| Оболочка командной строки | Команда активации |
 | :--- | :--- |
 | **Bash или Zsh** | `source .venv/bin/activate` |
 | **Fish** | `source .venv/bin/activate.fish` |
