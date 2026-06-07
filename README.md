@@ -46,15 +46,11 @@ git clone https://github.com/Antony-hash512/catcut.git
 ```fish
 cd ~/git/catcut/catcut-backend
 ```
-Для Fish:
 Активируйте виртуальное окружение:
-```fish
-source .venv/bin/activate.fish
-```
-Для Bash:
-```bash
-source .venv/bin/activate
-```
+
+| Для Fish | Для Bash |
+| :--- | :--- |
+| `source .venv/bin/activate.fish` | `source .venv/bin/activate` |
 
 Установаите пакеты Python:
 ```fish
