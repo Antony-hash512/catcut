@@ -35,6 +35,11 @@ source .venv/bin/activate.fish
 source .venv/bin/activate
 ```
 
+Установаите пакеты Python:
+```fish
+uv sync
+```
+
 Запустите сервер разработки:
 ```fish
 uv run python main.py
