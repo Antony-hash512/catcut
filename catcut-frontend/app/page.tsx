@@ -129,6 +129,7 @@ export default function Home() {
   // Styling settings
   const [fontName, setFontName] = useState("Montserrat");
   const [fontSize, setFontSize] = useState(26);
+  const [fontBold, setFontBold] = useState(true);
   const [verticalShift, setVerticalShift] = useState(0);
   const [bgOpacity, setBgOpacity] = useState(80);
   const [outlineColor, setOutlineColor] = useState("#000000");
@@ -581,7 +582,7 @@ export default function Home() {
           backgroundColor: bgEnabled ? hexToRgba(bgColor, bgOpacity / 100) : "transparent",
           fontFamily: fontName || "sans-serif",
           fontSize: `calc(${fontSize} / 1080 * 100cqh)`,
-          fontWeight: 800,
+          fontWeight: fontBold ? 800 : 400,
           lineHeight: 1.2,
           transition: "all 0.1s ease",
           zIndex: 20
@@ -662,6 +663,7 @@ export default function Home() {
           max_gap_seconds: maxGapSeconds,
           vertical_shift: verticalShift,
           bg_opacity: bgOpacity,
+          font_bold: fontBold,
           outline_color: outlineColor,
           shadow_color: shadowColor,
           bg_color: bgColor,
@@ -1023,6 +1025,19 @@ export default function Home() {
                 onChange={(e) => setFontSize(Number(e.target.value))}
                 style={{ width: "100%" }}
               />
+            </div>
+
+            {/* Font Bold */}
+            <div className="form-group">
+              <label className="checkbox-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={fontBold}
+                  onChange={(e) => setFontBold(e.target.checked)}
+                  style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                />
+                <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>Жирное начертание (Bold)</span>
+              </label>
             </div>
 
             {/* Vertical Position Shift */}

@@ -47,7 +47,8 @@ def build_ass(
     max_words_per_line: int = 3,
     max_gap_seconds: float = 0.8,
     vertical_shift: int = 0,
-    bg_opacity: int = 80
+    bg_opacity: int = 80,
+    font_bold: bool = True
 ) -> str:
     """
     Generates ASS subtitle content from words data.
@@ -63,6 +64,7 @@ def build_ass(
     style = pysubs2.SSAStyle()
     style.fontname = font_name
     style.fontsize = font_size
+    style.bold = font_bold
     style.primarycolor = pysubs2.Color(255, 255, 255) # Default primary
     style.secondarycolor = pysubs2.Color(0, 215, 255) # Default secondary for karaoke
     style.outlinecolor = pysubs2.Color(0, 0, 0)

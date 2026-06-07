@@ -38,6 +38,7 @@ class ASSGenerateRequest(BaseModel):
     max_gap_seconds: Optional[float] = 0.8
     vertical_shift: Optional[int] = 0
     bg_opacity: Optional[int] = 80
+    font_bold: Optional[bool] = True
 
 # Ensure temporary upload directory exists
 TEMP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temp")
@@ -274,7 +275,8 @@ async def api_generate_ass(request: ASSGenerateRequest):
             max_words_per_line=request.max_words_per_line,
             max_gap_seconds=request.max_gap_seconds,
             vertical_shift=request.vertical_shift,
-            bg_opacity=request.bg_opacity
+            bg_opacity=request.bg_opacity,
+            font_bold=request.font_bold
         )
         
         # Stream file response
