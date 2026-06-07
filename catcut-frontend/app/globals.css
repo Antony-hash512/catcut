@@ -15,6 +15,110 @@
   --shadow-glow: 0 0 20px rgba(168, 85, 247, 0.25);
   --font-primary: var(--font-outfit), sans-serif;
   --font-mono: var(--font-fira-code), monospace;
+
+  /* Theme variables default (dark) */
+  --bg-radial-1: rgba(168, 85, 247, 0.08);
+  --bg-radial-2: rgba(59, 130, 246, 0.08);
+  --bg-input: #0d0e12;
+  --bg-card-item: rgba(10, 11, 14, 0.5);
+  --bg-word-card: rgba(20, 22, 28, 0.8);
+  --bg-word-card-active: rgba(168, 85, 247, 0.15);
+  --border-word-card: var(--border-color);
+  --border-word-card-active: var(--primary);
+  --bg-warning: rgba(245, 158, 11, 0.15);
+  --border-warning: #f59e0b;
+  --text-warning: #fcd34d;
+  --bg-error-banner: rgba(239, 68, 68, 0.15);
+  --text-error-banner: #fca5a5;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg-main: #f8fafc;
+    --bg-card: rgba(255, 255, 255, 0.75);
+    --bg-card-hover: rgba(255, 255, 255, 0.95);
+    --border-color: rgba(15, 23, 42, 0.08);
+    --border-color-focus: rgba(139, 92, 246, 0.5);
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --primary: #8b5cf6;
+    --primary-hover: #7c3aed;
+    --accent: #eab308;
+    --error: #dc2626;
+    --success: #16a34a;
+    --shadow-glow: 0 4px 20px rgba(139, 92, 246, 0.12);
+    --bg-radial-1: rgba(139, 92, 246, 0.04);
+    --bg-radial-2: rgba(59, 130, 246, 0.04);
+    --bg-input: #f1f5f9;
+    --bg-card-item: rgba(15, 23, 42, 0.05);
+    --bg-word-card: rgba(255, 255, 255, 0.9);
+    --bg-word-card-active: rgba(139, 92, 246, 0.12);
+    --border-word-card: rgba(15, 23, 42, 0.08);
+    --border-word-card-active: var(--primary);
+    --bg-warning: rgba(245, 158, 11, 0.1);
+    --border-warning: rgba(245, 158, 11, 0.4);
+    --text-warning: #b45309;
+    --bg-error-banner: rgba(239, 68, 68, 0.15);
+    --text-error-banner: #991b1b;
+  }
+}
+
+[data-theme="light"] {
+  --bg-main: #f8fafc;
+  --bg-card: rgba(255, 255, 255, 0.75);
+  --bg-card-hover: rgba(255, 255, 255, 0.95);
+  --border-color: rgba(15, 23, 42, 0.08);
+  --border-color-focus: rgba(139, 92, 246, 0.5);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --primary: #8b5cf6;
+  --primary-hover: #7c3aed;
+  --accent: #eab308;
+  --error: #dc2626;
+  --success: #16a34a;
+  --shadow-glow: 0 4px 20px rgba(139, 92, 246, 0.12);
+  --bg-radial-1: rgba(139, 92, 246, 0.04);
+  --bg-radial-2: rgba(59, 130, 246, 0.04);
+  --bg-input: #f1f5f9;
+  --bg-card-item: rgba(15, 23, 42, 0.05);
+  --bg-word-card: rgba(255, 255, 255, 0.9);
+  --bg-word-card-active: rgba(139, 92, 246, 0.12);
+  --border-word-card: rgba(15, 23, 42, 0.08);
+  --border-word-card-active: var(--primary);
+  --bg-warning: rgba(245, 158, 11, 0.1);
+  --border-warning: rgba(245, 158, 11, 0.4);
+  --text-warning: #b45309;
+  --bg-error-banner: rgba(239, 68, 68, 0.15);
+  --text-error-banner: #991b1b;
+}
+
+[data-theme="dark"] {
+  --bg-main: #0a0b0e;
+  --bg-card: rgba(20, 22, 28, 0.65);
+  --bg-card-hover: rgba(28, 30, 39, 0.85);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-focus: rgba(147, 51, 234, 0.5);
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --primary: #a855f7;
+  --primary-hover: #c084fc;
+  --accent: #ffd700;
+  --error: #ef4444;
+  --success: #22c55e;
+  --shadow-glow: 0 0 20px rgba(168, 85, 247, 0.25);
+  --bg-radial-1: rgba(168, 85, 247, 0.08);
+  --bg-radial-2: rgba(59, 130, 246, 0.08);
+  --bg-input: #0d0e12;
+  --bg-card-item: rgba(10, 11, 14, 0.5);
+  --bg-word-card: rgba(20, 22, 28, 0.8);
+  --bg-word-card-active: rgba(168, 85, 247, 0.15);
+  --border-word-card: var(--border-color);
+  --border-word-card-active: var(--primary);
+  --bg-warning: rgba(245, 158, 11, 0.15);
+  --border-warning: #f59e0b;
+  --text-warning: #fcd34d;
+  --bg-error-banner: rgba(239, 68, 68, 0.15);
+  --text-error-banner: #fca5a5;
 }
 
 * {
@@ -27,8 +131,8 @@
 body {
   background-color: var(--bg-main);
   background-image: 
-    radial-gradient(circle at 10% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+    radial-gradient(circle at 10% 20%, var(--bg-radial-1) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, var(--bg-radial-2) 0%, transparent 40%);
   color: var(--text-main);
   font-family: var(--font-primary);
   min-height: 100vh;
@@ -46,12 +150,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--border-color);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(168, 85, 247, 0.5);
+  background: var(--primary);
 }
 
 /* Layout Container */
@@ -245,7 +349,7 @@ body {
 
 .form-control {
   width: 100%;
-  background: #0d0e12;
+  background: var(--bg-input);
   border: 1px solid var(--border-color);
   color: var(--text-main);
   padding: 0.75rem 1rem;
@@ -263,9 +367,8 @@ body {
 select.form-control {
   -webkit-appearance: none;
   appearance: none;
-  background-color: #0d0e12;
-  color: #f3f4f6;
-  color-scheme: dark;
+  background-color: var(--bg-input);
+  color: var(--text-main);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
@@ -274,8 +377,8 @@ select.form-control {
 }
 
 select.form-control option {
-  background-color: #1a1b23;
-  color: #f3f4f6;
+  background-color: var(--bg-main);
+  color: var(--text-main);
 }
 
 .flex-inputs {
@@ -313,7 +416,7 @@ select.form-control option {
 
 /* Word Cards List */
 .word-group-row {
-  background: rgba(10, 11, 14, 0.4);
+  background: var(--bg-card-item);
   border: 1px solid var(--border-color);
   border-radius: 0.75rem;
   padding: 1rem;
@@ -321,8 +424,8 @@ select.form-control option {
 }
 
 .word-group-row:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(28, 30, 39, 0.3);
+  border-color: var(--border-color-focus);
+  background: var(--bg-card-hover);
 }
 
 .word-cards-container {
@@ -334,14 +437,23 @@ select.form-control option {
 
 /* Individual Word Card */
 .word-card {
-  background: rgba(20, 22, 28, 0.8);
-  border: 1px solid var(--border-color);
+  background: var(--bg-word-card);
+  border: 1px solid var(--border-word-card);
   border-radius: 0.5rem;
   padding: 0.5rem 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   width: 140px;
+}
+
+.word-card.active {
+  background: var(--bg-word-card-active);
+  border-color: var(--border-word-card-active);
+}
+
+.word-card.active .word-input {
+  color: var(--accent);
 }
 
 .word-card:focus-within {
@@ -370,8 +482,8 @@ select.form-control option {
 }
 
 .time-input {
-  background: rgba(10, 11, 14, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
   color: var(--text-muted);
   width: 50px;
   text-align: center;
@@ -405,7 +517,7 @@ select.form-control option {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background: rgba(10, 11, 14, 0.8);
+  background: var(--bg-input);
   border: 1px solid var(--border-color);
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
@@ -529,4 +641,49 @@ select.form-control option {
   border-color: var(--primary);
   color: #fff;
   transform: translateY(-1px);
+}
+
+.model-status-card {
+  background: var(--bg-card-item);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.theme-toggle-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.theme-select {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.4rem 2.25rem 0.4rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%239ca3af' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 10px;
+  transition: all 0.2s;
+}
+
+.theme-select:hover {
+  border-color: var(--primary);
+  background: var(--bg-card-hover);
+}
+
+.theme-select option {
+  background-color: var(--bg-main);
+  color: var(--text-main);
 }

@@ -22,6 +22,43 @@ export default function Home() {
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [words, setWords] = useState<WordItem[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
+
+  // Load theme from localStorage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | "system" | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  // Apply theme and setup media listeners
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+    
+    const applyTheme = (themeName: "light" | "dark" | "system") => {
+      const root = document.documentElement;
+      if (themeName === "system") {
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        root.setAttribute("data-theme", systemTheme);
+      } else {
+        root.setAttribute("data-theme", themeName);
+      }
+    };
+
+    applyTheme(theme);
+
+    if (theme === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const handleSystemThemeChange = () => {
+        applyTheme("system");
+      };
+      mediaQuery.addEventListener("change", handleSystemThemeChange);
+      return () => {
+        mediaQuery.removeEventListener("change", handleSystemThemeChange);
+      };
+    }
+  }, [theme]);
 
   // AI Models state
   const [modelsList, setModelsList] = useState<ModelItem[]>([]);
@@ -502,20 +539,36 @@ export default function Home() {
           <h1 className="logo-cat">cat<span className="logo-cut">cut</span></h1>
           <span className="logo-badge">AI MVP</span>
         </div>
-        <div style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
-          Генерация пословных субтитров
+        
+        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+          <div style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+            Генерация пословных субтитров
+          </div>
+          
+          <div className="theme-toggle-container">
+            <select
+              value={theme}
+              onChange={(e) => setTheme(e.target.value as any)}
+              className="theme-select"
+              title="Выберите тему оформления"
+            >
+              <option value="system">💻 Системная</option>
+              <option value="light">☀️ Светлая</option>
+              <option value="dark">🌙 Тёмная</option>
+            </select>
+          </div>
         </div>
       </header>
 
       {/* Tauri Warning Banner */}
       {isTauri && showTauriWarning && (
         <div style={{
-          background: "rgba(245, 158, 11, 0.15)",
-          border: "1px solid #f59e0b",
+          background: "var(--bg-warning)",
+          border: "1px solid var(--border-warning)",
           borderRadius: "0.75rem",
           padding: "1rem",
           marginBottom: "2rem",
-          color: "#fcd34d",
+          color: "var(--text-warning)",
           fontSize: "0.95rem",
           display: "flex",
           justifyContent: "space-between",
@@ -530,7 +583,7 @@ export default function Home() {
             style={{
               background: "none",
               border: "none",
-              color: "#fcd34d",
+              color: "var(--text-warning)",
               cursor: "pointer",
               fontSize: "1.5rem",
               lineHeight: 1,
@@ -553,12 +606,12 @@ export default function Home() {
       {/* Error Message banner */}
       {errorMsg && (
         <div style={{
-          background: "rgba(239, 68, 68, 0.15)",
+          background: "var(--bg-error-banner)",
           border: "1px solid var(--error)",
           borderRadius: "0.75rem",
           padding: "1rem",
           marginBottom: "2rem",
-          color: "#fca5a5"
+          color: "var(--text-error-banner)"
         }}>
           ⚠️ <strong>Ошибка:</strong> {errorMsg}
         </div>
@@ -667,15 +720,7 @@ export default function Home() {
                 {modelsList.map((m) => (
                   <div
                     key={m.name}
-                    style={{
-                      background: "rgba(10, 11, 14, 0.5)",
-                      border: "1px solid var(--border-color)",
-                      borderRadius: "0.5rem",
-                      padding: "0.75rem",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center"
-                    }}
+                    className="model-status-card"
                   >
                     <div>
                       <span style={{ fontWeight: 700, fontSize: "0.9rem", textTransform: "capitalize" }}>
@@ -943,11 +988,7 @@ export default function Home() {
                         return (
                           <div
                             key={word.id}
-                            className={`word-card ${word.deactivated ? "deactivated" : ""}`}
-                            style={word.deactivated ? {} : {
-                              backgroundColor: isWordActive ? "rgba(168, 85, 247, 0.15)" : "rgba(20, 22, 28, 0.8)",
-                              borderColor: isWordActive ? "var(--primary)" : "var(--border-color)"
-                            }}
+                            className={`word-card ${isWordActive ? "active" : ""} ${word.deactivated ? "deactivated" : ""}`}
                           >
                             <div className="word-card-toolbar">
                               <button className="word-action-btn" title="Прослушать" onClick={() => playWordSegment(word)}>🔊</button>
@@ -967,9 +1008,6 @@ export default function Home() {
                               className="word-input"
                               value={word.word}
                               onChange={(e) => updateWordText(word.id, e.target.value)}
-                              style={{
-                                color: isWordActive ? "var(--accent)" : "var(--text-main)"
-                              }}
                             />
 
                             <div className="time-inputs">
