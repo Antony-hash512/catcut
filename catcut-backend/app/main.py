@@ -30,21 +30,21 @@ class WordItem(BaseModel):
 class ASSGenerateRequest(BaseModel):
     words: List[WordItem]
     font_name: Optional[str] = "Montserrat"
-    font_size: Optional[int] = 26
+    font_size: Optional[int] = 56
     active_color: Optional[str] = "#FFD700"
     inactive_color: Optional[str] = "#FFFFFF"
     style_mode: Optional[str] = "active_word"
-    max_words_per_line: Optional[int] = 3
+    max_words_per_line: Optional[int] = 1
     max_gap_seconds: Optional[float] = 0.8
     vertical_shift: Optional[int] = 0
     bg_opacity: Optional[int] = 80
-    text_opacity: Optional[int] = 100
+    text_opacity: Optional[int] = 80
     font_bold: Optional[bool] = True
     outline_color: Optional[str] = "#000000"
     shadow_color: Optional[str] = "#000000"
     bg_color: Optional[str] = "#000000"
     outline_enabled: Optional[bool] = True
-    outline_width: Optional[float] = 3.0
+    outline_width: Optional[float] = 8.0
     shadow_enabled: Optional[bool] = False
     bg_enabled: Optional[bool] = False
 

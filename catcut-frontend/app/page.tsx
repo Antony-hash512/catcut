@@ -162,13 +162,13 @@ export default function Home() {
 
   // Styling settings
   const [fontName, setFontName] = useState("Montserrat");
-  const [fontSize, setFontSize] = useState(26);
+  const [fontSize, setFontSize] = useState(56);
   const [fontBold, setFontBold] = useState(true);
   const [verticalShift, setVerticalShift] = useState(0);
   const [bgOpacity, setBgOpacity] = useState(80);
-  const [textOpacity, setTextOpacity] = useState(100);
+  const [textOpacity, setTextOpacity] = useState(80);
   const [outlineColor, setOutlineColor] = useState("#000000");
-  const [outlineWidth, setOutlineWidth] = useState(3);
+  const [outlineWidth, setOutlineWidth] = useState(8);
   const [shadowColor, setShadowColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#000000");
   const [outlineEnabled, setOutlineEnabled] = useState(true);
@@ -177,7 +177,7 @@ export default function Home() {
   const [activeColor, setActiveColor] = useState("#FFD700"); // Yellow
   const [inactiveColor, setInactiveColor] = useState("#FFFFFF"); // White
   const [styleMode, setStyleMode] = useState<"active_word" | "karaoke">("active_word");
-  const [maxWordsPerLine, setMaxWordsPerLine] = useState(3);
+  const [maxWordsPerLine, setMaxWordsPerLine] = useState(1);
   const [maxGapSeconds, setMaxGapSeconds] = useState(0.8);
   const [minWordDuration, setMinWordDuration] = useState(0.25);
 
