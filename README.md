@@ -5,7 +5,212 @@
 
 # english
 
+## 🐱 catcut — Beautiful automatic subtitle generator via local AI models
 
+catcut is a tool for automatic speech recognition with word-level timing alignment and generation of beautiful, stylized `.ass` subtitles (with karaoke highlighting or word-by-word selection).
+
+---
+
+## 🛠️ Project Setup
+
+The project is organized as a monorepo. The backend and frontend run in separate terminals.
+### 0. Install system dependencies and download the repository
+
+Before starting, install all necessary packages to build and run the backend and frontend. Use your operating system's package manager. Example for **Arch Linux** (using the `--needed` flag):
+
+```fish
+sudo pacman -S --needed git nodejs npm python uv ffmpeg
+```
+
+Additionally, for building the desktop version (Tauri v2):
+
+```fish
+sudo pacman -S --needed base-devel curl wget file openssl webkit2gtk-4.1 appmenu-gtk-module libappindicator-gtk3 librsvg rustup 
+```
+
+> [!NOTE]
+> After installing `rustup`, initialize the stable version of Rust:
+> ```fish
+> rustup default stable
+> ```
+> (rustup is only required for building the desktop tauri application; it is not necessary for running the frontend in a browser)
+
+Then clone the repository:
+
+```fish
+mkdir -p ~/git
+cd ~/git
+git clone https://github.com/Antony-hash512/catcut.git
+```
+
+### 1. Running the backend (Python + FastAPI)
+
+Make sure you are in the `catcut-backend` directory:
+
+```fish
+cd ~/git/catcut/catcut-backend
+```
+Activate the virtual environment:
+
+| Command Line Shell | Activation Command |
+| :--- | :--- |
+| **Bash or Zsh** | `source .venv/bin/activate` |
+| **Fish** | `source .venv/bin/activate.fish` |
+| **Nushell** | `overlay use .venv/bin/nu-activate.nu` |
+| **PowerShell** | `.venv/bin/Activate.ps1` |
+| **cmd.exe (Windows)** | `.venv\Scripts\activate.bat` |
+
+Install Python packages:
+```fish
+uv sync
+```
+
+Run the server part (backend):
+```fish
+uv run python main.py
+```
+*   The server will start at **`http://localhost:8000`**.
+*   Interactive API documentation (Swagger) will be available at **`http://localhost:8000/docs`**.
+
+If this port is busy, the backend will automatically find another available port.
+
+---
+
+### 2. Running the frontend (Next.js + TypeScript)
+
+Make sure you are in the `catcut-frontend` directory:
+
+```fish
+cd ~/git/catcut/catcut-frontend
+```
+
+Start the development server:
+```fish
+npm run dev
+```
+*   The frontend will start at **`http://localhost:3000`**.
+*   Open `http://localhost:3000` in your browser to interact with the web interface.
+
+If this port is busy, the frontend will automatically find another available port.
+
+---
+
+### 3. Running the desktop version (Tauri v2)
+
+In addition to the web version, the project supports running as a desktop application using **Tauri v2**. 
+
+In desktop mode, selecting or drag-and-dropping a media file works **instantly** without copying it to a web sandbox or sending it over the network — the application reads the absolute path to the file on disk and passes it to the local backend API. Video file playback is implemented via the secure `convertFileSrc` protocol.
+
+#### System dependencies (Arch Linux)
+Before building, make sure all system dependencies are installed (if you haven't installed them in step 0):
+```fish
+sudo pacman -S --needed base-devel curl wget file openssl webkit2gtk-4.1 appmenu-gtk-module libappindicator-gtk3 librsvg rustup
+```
+
+#### Running in development mode
+Make sure you are in the `catcut-frontend` directory:
+```fish
+cd ~/git/catcut/catcut-frontend
+```
+
+Ensure the backend is running, then execute:
+```fish
+npm run tauri dev
+```
+Tauri will automatically compile the Rust part and launch the desktop application window.
+
+#### Building a release
+To compile an optimized standalone application, execute:
+```fish
+npm run tauri build
+```
+The compiled binary package (`.deb`, `.AppImage`, or executable file) will be located in the `catcut-frontend/src-tauri/target/release/bundle/` directory.
+
+---
+
+## 📂 Project Structure
+
+```
+catcut/ (Git repository root)
+├── LICENSE                  # GPL v3 License
+├── README.md                # This help file
+├── .gitignore               # Unified gitignore file
+│
+├── catcut-backend/          # Backend (Python + uv)
+│   ├── app/                 # FastAPI source code
+│   │   ├── core.py          # AI core (stable-ts + Whisper on GPU)
+│   │   ├── ass_builder.py   # ASS styles generator (pysubs2)
+│   │   └── main.py          # API endpoints
+│   ├── fonts/               # Local fonts (Inter, Montserrat, Noto, Oswald, Fira)
+│   ├── temp/                # Temporary storage for video/audio
+│   ├── main.py              # uvicorn launcher script
+│   ├── pyproject.toml       # Python dependencies
+│   └── uv.lock              # Locked package versions
+│
+└── catcut-frontend/         # Frontend (Next.js + TypeScript)
+    ├── app/
+    │   ├── page.tsx         # Main page (upload interface and editor)
+    │   ├── globals.css      # Styling (Vanilla CSS)
+    │   └── layout.tsx       # Application layout
+```
+
+---
+
+## 🎨 Styling Features
+
+In the web interface, you can configure the parameters for the final subtitle file:
+1.  **Font Family:** Montserrat, Inter, Roboto, Oswald, Fira Mono, Noto Sans (all fonts are provided locally from the backend folder `catcut-backend/fonts/`).
+2.  **Font Size.**
+3.  **Animation:**
+    *   `Active Word` (the currently spoken word is highlighted with the selected color and scaled up; other words in the phrase remain standard).
+    *   `Karaoke` (the line remains on the screen, and words are filled with the active color sequentially by syllables/words).
+4.  **Colors:** individual color selection for active and background text.
+5.  **Maximum number of words per line** and **pause combining sensitivity** (in seconds).
+
+---
+
+## 🧠 Using Local (Offline) AI Models
+
+You can start downloading local AI models directly from the frontend web interface. The `faster-whisper` engine automatically downloads the selected model (e.g., `small`) from the Hugging Face repository (`Systran/faster-whisper-small`) and the backend caches it in the user's local directory:
+`~/.cache/huggingface/hub/models--Systran--faster-whisper-small/`
+Five models to choose from:
+- tiny
+- base
+- small
+- medium
+- large-v3
+
+They differ in VRAM or RAM requirements and processing speed. The larger the model, the more accurately it recognizes speech, but the slower it runs.
+
+If the backend needs to operate entirely without internet access and you want to download the models in advance, you can perform the following steps (though it's not required):
+
+### 1. Downloading the model manually
+
+You can clone the required model directly from Hugging Face using `git-lfs` (the set of models from Systran is optimized for CTranslate2/faster-whisper):
+
+```fish
+# Install Git LFS (if not installed)
+sudo pacman -S git-lfs
+git lfs install
+
+# Clone the model repository to a convenient location
+git clone https://huggingface.co/Systran/faster-whisper-small
+```
+*Available model sizes: `faster-whisper-tiny`, `faster-whisper-base`, `faster-whisper-small`, `faster-whisper-medium`, `faster-whisper-large-v3`.*
+
+### 2. Running the backend specifying the path to a local model
+
+In the `catcut-backend/app/core.py` file or during model initialization, you can pass the absolute path to the cloned folder instead of the model name:
+
+```python
+# Instead of "small", pass the absolute path to the folder on the disk
+model = stable_whisper.load_faster_whisper("/absolute/path/to/faster-whisper-small", device="cuda")
+```
+With this setup, the backend will run 100% locally and will not attempt to access the network.
+
+---
+
+*(The translate icon used in the language selector is from [Google Material Symbols](https://fonts.google.com/icons), licensed under the Apache License 2.0, which is compatible with GPL v3, the license used by this project.)*
 
 # русский
 
@@ -216,4 +421,4 @@ model = stable_whisper.load_faster_whisper("/absolute/path/to/faster-whisper-sma
 
 ---
 
-*(The translate icon used in the language selector is from [Google Material Symbols](https://fonts.google.com/icons), licensed under the Apache License 2.0, совместимой с GPL v3, которой лицензируется данный проект.)*
+*(Иконка перевода, используемая в селекторе языков, взята из [Google Material Symbols](https://fonts.google.com/icons) и распространяется по лицензии Apache License 2.0, совместимой с GPL v3, под которой лицензируется данный проект.)*
