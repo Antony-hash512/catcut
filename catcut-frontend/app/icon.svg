@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background -->
+  <rect width="100" height="100" rx="20" fill="#A855F7" />
+  
+  <!-- Ears -->
+  <polygon points="20,40 15,10 45,35" fill="#FFFFFF" />
+  <polygon points="80,40 85,10 55,35" fill="#FFFFFF" />
+  <polygon points="23,35 18,18 39,32" fill="#FFB6C1" /> <!-- Inner left ear -->
+  <polygon points="77,35 82,18 61,32" fill="#FFB6C1" /> <!-- Inner right ear -->
+  
+  <!-- Face -->
+  <circle cx="50" cy="55" r="38" fill="#FFFFFF" />
+  
+  <!-- Eyes -->
+  <circle cx="35" cy="50" r="6" fill="#000000" />
+  <circle cx="65" cy="50" r="6" fill="#000000" />
+  
+  <!-- Nose -->
+  <polygon points="45,62 55,62 50,68" fill="#FFB6C1" />
+  
+  <!-- Mouth (simple lines) -->
+  <path d="M 50 68 Q 42 75 35 70" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 50 68 Q 58 75 65 70" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Whiskers -->
+  <line x1="8" y1="48" x2="20" y2="51" stroke="#000000" stroke-width="2" stroke-linecap="round" />
+  <line x1="8" y1="58" x2="20" y2="56" stroke="#000000" stroke-width="2" stroke-linecap="round" />
+  <line x1="92" y1="48" x2="80" y2="51" stroke="#000000" stroke-width="2" stroke-linecap="round" />
+  <line x1="92" y1="58" x2="80" y2="56" stroke="#000000" stroke-width="2" stroke-linecap="round" />
+</svg>
