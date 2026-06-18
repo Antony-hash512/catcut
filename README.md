@@ -207,4 +207,4 @@ model = stable_whisper.load_faster_whisper("/absolute/path/to/faster-whisper-sma
 
 ---
 
-*(The translate icon used in the language selector is from [Google Material Symbols](https://fonts.google.com/icons), licensed under the Apache License 2.0)*
+*(The translate icon used in the language selector is from [Google Material Symbols](https://fonts.google.com/icons), licensed under the Apache License 2.0, совместимой с GPL v3, которой лицензируется данный проект.)*
