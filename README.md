@@ -5,7 +5,7 @@
 
 # english
 
-## 🐱 catcut — Beautiful automatic subtitle generator via local AI models
+## 🐱 catcut — A cute automatic subtitle generator via local AI models from your videos
 
 catcut is a tool for automatic speech recognition with word-level timing alignment and generation of beautiful, stylized `.ass` subtitles (with karaoke highlighting or word-by-word selection).
 
@@ -214,7 +214,7 @@ With this setup, the backend will run 100% locally and will not attempt to acces
 
 # русский
 
-## 🐱 catcut — Генератор красивых автоматических субтитров через локальные ИИ-модели
+## 🐱 catcut — Генератор красивых автоматических субтитров с помощью локальных ИИ-моделей для ваших видео
 
 
 catcut — это инструмент для автоматического распознавания речи с пословным выравниванием таймингов и генерацией красивых, стилизованных `.ass` субтитров (с караоке-подсветкой или пословным выделением).
