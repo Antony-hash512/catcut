@@ -38,7 +38,6 @@ const DICT = {
     themeLight: "☀️ Светлая",
     themeDark: "🌙 Тёмная",
     themeLabel: "Тема оформления:",
-    langLabel: "Язык:",
     tauriWarning: "⚠️ <strong>Внимание:</strong> Вы используете десктопную версию (Tauri). Из-за особенностей движка WebKit2GTK воспроизведение видео в предпросмотре может работать нестабильно (лаги, артефакты). Мы рекомендуем пока использовать веб-версию для более плавной работы.",
     errorLabel: "⚠️ <strong>Ошибка:</strong>",
     uploadTitle: "Перетащите видео или аудио файл",
@@ -117,7 +116,6 @@ const DICT = {
     themeLight: "☀️ Light",
     themeDark: "🌙 Dark",
     themeLabel: "Theme:",
-    langLabel: "Language:",
     tauriWarning: "⚠️ <strong>Warning:</strong> You are using the desktop version (Tauri). Due to WebKit2GTK engine specifics, video preview playback may be unstable (lags, artifacts). We recommend using the web version for smoother performance for now.",
     errorLabel: "⚠️ <strong>Error:</strong>",
     uploadTitle: "Drag & drop video or audio file",
@@ -980,8 +978,16 @@ export default function Home() {
           </div>
 
           <div className="theme-toggle-container" style={{ display: "flex", gap: "1rem" }}>
-            <div>
-              <span className="theme-label" style={{ marginRight: "0.5rem" }}>{DICT[lang].langLabel}</span>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <img 
+                src="/translate.svg" 
+                width={20} 
+                height={20} 
+                alt="Translate" 
+                style={{ marginRight: "0.4rem", opacity: 0.8 }} 
+                title="Translate icon by Google Material Symbols"
+              />
+              <span className="theme-label" style={{ marginRight: "0.5rem" }}>Language:</span>
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as LangType)}

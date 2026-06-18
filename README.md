@@ -205,3 +205,6 @@ model = stable_whisper.load_faster_whisper("/absolute/path/to/faster-whisper-sma
 ```
 При таком запуске бэкенд будет работать на 100% локально и не попытается обратиться к сети.
 
+---
+
+*(The translate icon used in the language selector is from [Google Material Symbols](https://fonts.google.com/icons), licensed under the Apache License 2.0)*
