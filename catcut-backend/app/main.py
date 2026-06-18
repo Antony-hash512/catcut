@@ -26,6 +26,7 @@ class WordItem(BaseModel):
     word: str
     start: float
     end: float
+    is_newline: Optional[bool] = False
 
 class ASSGenerateRequest(BaseModel):
     words: List[WordItem]

@@ -8,6 +8,7 @@ interface WordItem {
   end: number;
   id: string; // unique identifier
   deactivated?: boolean;
+  is_newline?: boolean;
 }
 
 interface ModelItem {
@@ -518,6 +519,44 @@ export default function Home() {
     });
   };
 
+  const addLine = (targetId: string | null) => {
+    setWords(prev => {
+      let newStart = 0;
+      let newEnd = 0.5;
+
+      if (targetId) {
+        const idx = prev.findIndex(w => w.id === targetId);
+        if (idx !== -1) {
+          const targetWord = prev[idx];
+          newStart = targetWord.end;
+          newEnd = targetWord.end + 0.5;
+        }
+      } else if (prev.length > 0) {
+        const lastWord = prev[prev.length - 1];
+        newStart = lastWord.end;
+        newEnd = lastWord.end + 0.5;
+      }
+
+      const newWord: WordItem = {
+        word: "новая строка",
+        start: Number(newStart.toFixed(2)),
+        end: Number(newEnd.toFixed(2)),
+        id: `w-newline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        deactivated: false,
+        is_newline: true
+      };
+
+      if (!targetId) {
+        return [...prev, newWord];
+      }
+
+      const idx = prev.findIndex(w => w.id === targetId);
+      const updated = [...prev];
+      updated.splice(idx + 1, 0, newWord);
+      return updated;
+    });
+  };
+
   // Play a specific word segment
   const playWordSegment = async (word: WordItem) => {
     if (!mediaRef.current) return;
@@ -669,7 +708,7 @@ export default function Home() {
       const prevWord = currentLine[currentLine.length - 1];
       const gap = word.start - prevWord.end;
 
-      if (currentLine.length >= maxWordsPerLine || gap > maxGapSeconds) {
+      if (currentLine.length >= maxWordsPerLine || gap > maxGapSeconds || word.is_newline) {
         lines.push(currentLine);
         currentLine = [word];
       } else {
@@ -693,7 +732,7 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          words: words.filter(w => !w.deactivated).map(({ word, start, end }) => ({ word, start, end })),
+          words: words.filter(w => !w.deactivated).map(({ word, start, end, is_newline }) => ({ word, start, end, is_newline })),
           font_name: fontName,
           font_size: fontSize,
           active_color: activeColor,
@@ -1405,6 +1444,13 @@ export default function Home() {
                         >
                           + в начало
                         </button>
+                        <button
+                          className="line-action-btn"
+                          title="Добавить новую строку ниже"
+                          onClick={() => addLine(line[line.length - 1].id)}
+                        >
+                          + строку ниже
+                        </button>
                       </div>
                       <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
                         {line.filter(w => !w.deactivated).map(w => w.word.trim()).join(" ")}
@@ -1422,6 +1468,14 @@ export default function Home() {
                           >
                             <div className="word-card-toolbar">
                               <button className="word-action-btn" title="Прослушать" onClick={() => playWordSegment(word)}>🔊</button>
+                              <button
+                                className={`word-action-btn ${word.is_newline ? "active-toggle" : ""}`}
+                                style={{ color: word.is_newline ? "var(--primary)" : "inherit" }}
+                                title="Начинать новую строку с этого слова"
+                                onClick={() => setWords(prev => prev.map(w => w.id === word.id ? { ...w, is_newline: !w.is_newline } : w))}
+                              >
+                                ↵
+                              </button>
                               <button className="word-action-btn" title="Добавить слово после" onClick={() => addWord(word.id, "after")}>➕</button>
                               <button
                                 className={`word-action-btn ${word.deactivated ? "deactivated-toggle" : ""}`}
@@ -1473,6 +1527,23 @@ export default function Home() {
                   </div>
                 );
               })}
+              <div style={{ display: "flex", justifyContent: "center", padding: "1.5rem" }}>
+                <button
+                  onClick={() => addLine(null)}
+                  style={{
+                    background: "var(--primary)",
+                    color: "white",
+                    border: "none",
+                    padding: "0.75rem 1.5rem",
+                    borderRadius: "0.5rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontSize: "1rem"
+                  }}
+                >
+                  ➕ Добавить строку в конец
+                </button>
+              </div>
             </div>
           </main>
 

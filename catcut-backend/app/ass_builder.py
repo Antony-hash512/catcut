@@ -26,7 +26,7 @@ def group_words_into_lines(words: List[Dict[str, Any]], max_words: int = 3, max_
         prev_word = current_line[-1]
         gap = word['start'] - prev_word['end']
         
-        if len(current_line) >= max_words or gap > max_gap:
+        if len(current_line) >= max_words or gap > max_gap or word.get('is_newline', False):
             lines.append(current_line)
             current_line = [word]
         else:
