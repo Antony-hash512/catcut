@@ -210,7 +210,7 @@ With this setup, the backend will run 100% locally and will not attempt to acces
 
 ---
 
-*(The translate icon used in the language selector is from [Google Material Symbols](https://fonts.google.com/icons), licensed under the Apache License 2.0, which is compatible with GPL v3, the license used by this project.)*
+*(The icons used in the language selector, copy button, etc., are from [Google Material Symbols](https://fonts.google.com/icons), licensed under the Apache License 2.0, which is compatible with GPL v3, the license used by this project.)*
 
 # русский
 
@@ -421,4 +421,4 @@ model = stable_whisper.load_faster_whisper("/absolute/path/to/faster-whisper-sma
 
 ---
 
-*(Иконка перевода, используемая в селекторе языков, взята из [Google Material Symbols](https://fonts.google.com/icons) и распространяется по лицензии Apache License 2.0, совместимой с GPL v3, под которой лицензируется данный проект.)*
+*(Иконки, используемые в селекторе языков, кнопке "копировать" и т.д., взяты из [Google Material Symbols](https://fonts.google.com/icons) и распространяются по лицензии Apache License 2.0, совместимой с GPL v3, под которой лицензируется данный проект.)*

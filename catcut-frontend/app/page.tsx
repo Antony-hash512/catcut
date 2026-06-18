@@ -234,6 +234,32 @@ export default function Home() {
   const [isTauri, setIsTauri] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
   const [lang, setLang] = useState<LangType>("en");
+  const [copied, setCopied] = useState(false);
+
+  const getFfmpegCommand = () => {
+    const inputName = file?.name || "video.mp4";
+    const escapeShellArg = (arg: string) => `'${arg.replace(/'/g, "'\\''")}'`;
+    let baseName = inputName;
+    let ext = ".mp4";
+    const lastDot = inputName.lastIndexOf('.');
+    if (lastDot > 0) {
+      baseName = inputName.substring(0, lastDot);
+      ext = inputName.substring(lastDot);
+    }
+    const outName = `${baseName}_hardsubbed${ext}`;
+    const assName = `${baseName}.ass`;
+    return `ffmpeg -i ${escapeShellArg(inputName)} -vf "ass=${escapeShellArg(assName)}" -c:a copy ${escapeShellArg(outName)}`;
+  };
+
+  const handleCopyCommand = async () => {
+    try {
+      await navigator.clipboard.writeText(getFfmpegCommand());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy", err);
+    }
+  };
 
   // Load theme from localStorage
   useEffect(() => {
@@ -1613,9 +1639,33 @@ export default function Home() {
             <div style={{ padding: "0 1.5rem 1rem", borderBottom: "1px solid var(--border-color)" }}>
               <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", background: "rgba(0,0,0,0.1)", padding: "1rem", borderRadius: "0.5rem", border: "1px solid var(--border-color)" }}>
                 <p style={{ marginBottom: "0.5rem" }}>{DICT[lang].ffmpegHardsubInfo}</p>
-                <code style={{ background: "rgba(0,0,0,0.2)", padding: "0.5rem", borderRadius: "0.25rem", display: "block", userSelect: "all", color: "var(--primary)", fontFamily: "monospace" }}>
-                  ffmpeg -i video.mp4 -vf "ass=subtitles.ass" -c:a copy out.mp4
-                </code>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <code style={{ flex: 1, background: "rgba(0,0,0,0.2)", padding: "0.5rem", borderRadius: "0.25rem", overflowX: "auto", whiteSpace: "nowrap", userSelect: "all", color: "var(--primary)", fontFamily: "monospace" }}>
+                    {getFfmpegCommand()}
+                  </code>
+                  <button
+                    onClick={handleCopyCommand}
+                    title="Копировать / Copy"
+                    style={{
+                      background: copied ? "var(--success)" : "rgba(255, 255, 255, 0.1)",
+                      border: "1px solid var(--border-color)",
+                      color: copied ? "#fff" : "var(--text-main)",
+                      padding: "0.4rem 0.5rem",
+                      borderRadius: "0.25rem",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    {copied ? (
+                      <span style={{ fontSize: "0.8rem", fontWeight: 600, padding: "0 0.2rem" }}>OK</span>
+                    ) : (
+                      <img src="/content_copy.svg" width={18} height={18} alt="Copy" style={{ opacity: 0.8 }} />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
