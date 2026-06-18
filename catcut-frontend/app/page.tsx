@@ -109,6 +109,7 @@ const DICT = {
     errorUnknown: "Неизвестная ошибка",
     errorAssSave: "Ошибка при генерации/сохранении .ass файла:",
     errorFastApi: "Не удалось связаться с сервером бэкенда. Убедитесь, что FastAPI сервер запущен на порту 8000.",
+    ffmpegHardsubInfo: "💡 Команда для наложения субтитров (хардсаб) на видео через FFmpeg:",
   },
   en: {
     appDesc: "Word-by-word subtitle generation",
@@ -187,6 +188,7 @@ const DICT = {
     errorUnknown: "Unknown error",
     errorAssSave: "Error generating/saving .ass file:",
     errorFastApi: "Could not connect to backend server. Make sure the FastAPI server is running on port 8000.",
+    ffmpegHardsubInfo: "💡 Command to hardsub subtitles onto a video using FFmpeg:",
   }
 };
 
@@ -1606,6 +1608,15 @@ export default function Home() {
               <button className="btn btn-primary" onClick={downloadAssFile} style={{ padding: "0.5rem 1.5rem", fontSize: "0.9rem" }}>
                 💾 {DICT[lang].downloadBtn} .ass файл
               </button>
+            </div>
+
+            <div style={{ padding: "0 1.5rem 1rem", borderBottom: "1px solid var(--border-color)" }}>
+              <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", background: "rgba(0,0,0,0.1)", padding: "1rem", borderRadius: "0.5rem", border: "1px solid var(--border-color)" }}>
+                <p style={{ marginBottom: "0.5rem" }}>{DICT[lang].ffmpegHardsubInfo}</p>
+                <code style={{ background: "rgba(0,0,0,0.2)", padding: "0.5rem", borderRadius: "0.25rem", display: "block", userSelect: "all", color: "var(--primary)", fontFamily: "monospace" }}>
+                  ffmpeg -i video.mp4 -vf "ass=subtitles.ass" -c:a copy out.mp4
+                </code>
+              </div>
             </div>
 
             <div className="timeline-scroll">
