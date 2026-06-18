@@ -28,6 +28,171 @@ const hexToRgba = (hex: string, opacity: number) => {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+
+type LangType = "ru" | "en";
+
+const DICT = {
+  ru: {
+    appDesc: "Генерация пословных субтитров",
+    themeSystem: "💻 Системная",
+    themeLight: "☀️ Светлая",
+    themeDark: "🌙 Тёмная",
+    themeLabel: "Тема оформления:",
+    langLabel: "Язык:",
+    tauriWarning: "⚠️ <strong>Внимание:</strong> Вы используете десктопную версию (Tauri). Из-за особенностей движка WebKit2GTK воспроизведение видео в предпросмотре может работать нестабильно (лаги, артефакты). Мы рекомендуем пока использовать веб-версию для более плавной работы.",
+    errorLabel: "⚠️ <strong>Ошибка:</strong>",
+    uploadTitle: "Перетащите видео или аудио файл",
+    uploadSubtitle: "Поддерживаются форматы MP4, MKV, MOV, MP3, WAV и др.",
+    fileSelected: "📄 <strong>Выбран файл:</strong>",
+    filePath: "Путь на диске:",
+    startTranscription: "🚀 Начать распознавание речи",
+    modelNotDownloaded: "Выбранная модель не скачана. Скачайте её справа перед продолжением.",
+    modelTitle: "🧠 Модель Whisper ИИ",
+    modelDesc: "Выберите размер модели. Большие модели точнее, но работают медленнее и требуют больше VRAM/ОЗУ.",
+    modelTinyDesc: "Tiny (~75 MB) - Сверхбыстрая",
+    modelBaseDesc: "Base (~140 MB) - Быстрая",
+    modelSmallDesc: "Small (~460 MB) - Оптимально",
+    modelMediumDesc: "Medium (~1.5 GB) - Высокая точность",
+    modelLargeDesc: "Large-v3 (~3 GB) - Максимальная точность",
+    modelManager: "Менеджер моделей на диске",
+    downloaded: "Скачана",
+    downloading: "Загрузка...",
+    downloadBtn: "Скачать",
+    loadingTitle: "Распознаем речь...",
+    loadingDesc: "Это может занять некоторое время. Наша нейросеть запускает модель",
+    loadingDesc2: ", извлекает дорожку и выравнивает таймкоды каждого слова с помощью GPU ускорения.",
+    assStylesTitle: "🎨 Настройки стиля ASS",
+    fontFamilyLabel: "Шрифт субтитров",
+    fontInCatalog: "Уже в каталоге",
+    fontClassic: "Классика мемов",
+    fontSizeLabel: "Размер шрифта:",
+    fontBoldLabel: "Жирное начертание (Bold)",
+    verticalShiftLabel: "Смещение по вертикали:",
+    textOpacityLabel: "Прозрачность текста:",
+    animationStyleLabel: "Стиль анимации",
+    animationActiveWord: "Active Word (Highlight текущего слова)",
+    animationKaraoke: "Karaoke (Заполнение цветом в строке)",
+    inactiveColorLabel: "Цвет обычного текста",
+    activeColorLabel: "Цвет активного слова",
+    outlineLabel: "Обводка текста",
+    outlineWidthLabel: "Толщина обводки:",
+    shadowLabel: "Тень текста",
+    bgLabel: "Задний фон (плашка)",
+    bgOpacityLabel: "Прозрачность фона:",
+    wordsPerLineLabel: "Слов в строке:",
+    gapLabel: "Пауза-стык (сек):",
+    minWordDurationLabel: "Минимальная длительность слова (сек):",
+    applyBtn: "Применить",
+    applyTitle: "Применить минимальную длительность и скорректировать наложения для всех слов",
+    previewTitle: "Предпросмотр аудио/видео",
+    editorTitle: "✏️ Пословный редактор",
+    downloadAssBtn: "💾 Скачать .ass файл",
+    lineLabel: "Строка",
+    addStartBtn: "+ в начало",
+    addStartTitle: "Добавить слово в начало строки",
+    addLineBelowBtn: "+ строку ниже",
+    addLineBelowTitle: "Добавить новую строку ниже",
+    listenTitle: "Прослушать",
+    startNewLineTitle: "Начинать новую строку с этого слова",
+    addAfterTitle: "Добавить слово после",
+    activateTitle: "Активировать",
+    deactivateTitle: "Деактивировать",
+    deleteTitle: "Удалить",
+    startLabel: "старт:",
+    endLabel: "конец:",
+    addLineEndBtn: "➕ Добавить строку в конец",
+    newWordPlaceholder: "слово",
+    newLinePlaceholder: "новая строка",
+    errorModelDownload: "Не удалось запустить скачивание модели.",
+    errorServerConn: "Ошибка при связи с сервером.",
+    errorTranscription: "Ошибка при распознавании видео.",
+    errorAssGeneration: "Не удалось сгенерировать файл субтитров.",
+    errorUnknown: "Неизвестная ошибка",
+    errorAssSave: "Ошибка при генерации/сохранении .ass файла:",
+    errorFastApi: "Не удалось связаться с сервером бэкенда. Убедитесь, что FastAPI сервер запущен на порту 8000.",
+  },
+  en: {
+    appDesc: "Word-by-word subtitle generation",
+    themeSystem: "💻 System",
+    themeLight: "☀️ Light",
+    themeDark: "🌙 Dark",
+    themeLabel: "Theme:",
+    langLabel: "Language:",
+    tauriWarning: "⚠️ <strong>Warning:</strong> You are using the desktop version (Tauri). Due to WebKit2GTK engine specifics, video preview playback may be unstable (lags, artifacts). We recommend using the web version for smoother performance for now.",
+    errorLabel: "⚠️ <strong>Error:</strong>",
+    uploadTitle: "Drag & drop video or audio file",
+    uploadSubtitle: "Supported formats: MP4, MKV, MOV, MP3, WAV, etc.",
+    fileSelected: "📄 <strong>Selected file:</strong>",
+    filePath: "Disk path:",
+    startTranscription: "🚀 Start transcription",
+    modelNotDownloaded: "The selected model is not downloaded. Download it on the right before proceeding.",
+    modelTitle: "🧠 Whisper AI Model",
+    modelDesc: "Select model size. Larger models are more accurate but slower and require more VRAM/RAM.",
+    modelTinyDesc: "Tiny (~75 MB) - Super fast",
+    modelBaseDesc: "Base (~140 MB) - Fast",
+    modelSmallDesc: "Small (~460 MB) - Optimal",
+    modelMediumDesc: "Medium (~1.5 GB) - High accuracy",
+    modelLargeDesc: "Large-v3 (~3 GB) - Maximum accuracy",
+    modelManager: "On-disk Model Manager",
+    downloaded: "Downloaded",
+    downloading: "Downloading...",
+    downloadBtn: "Download",
+    loadingTitle: "Transcribing speech...",
+    loadingDesc: "This might take a while. Our neural network runs the",
+    loadingDesc2: "model, extracts the track and aligns timecodes for each word using GPU acceleration.",
+    assStylesTitle: "🎨 ASS Style Settings",
+    fontFamilyLabel: "Subtitle Font",
+    fontInCatalog: "Already in catalog",
+    fontClassic: "Meme classic",
+    fontSizeLabel: "Font Size:",
+    fontBoldLabel: "Bold text",
+    verticalShiftLabel: "Vertical Shift:",
+    textOpacityLabel: "Text Opacity:",
+    animationStyleLabel: "Animation Style",
+    animationActiveWord: "Active Word (Highlight current word)",
+    animationKaraoke: "Karaoke (Color fill by line)",
+    inactiveColorLabel: "Inactive text color",
+    activeColorLabel: "Active word color",
+    outlineLabel: "Text Outline",
+    outlineWidthLabel: "Outline Width:",
+    shadowLabel: "Text Shadow",
+    bgLabel: "Background Box",
+    bgOpacityLabel: "Background Opacity:",
+    wordsPerLineLabel: "Words per line:",
+    gapLabel: "Pause gap (sec):",
+    minWordDurationLabel: "Min word duration (sec):",
+    applyBtn: "Apply",
+    applyTitle: "Apply minimum duration and adjust overlaps for all words",
+    previewTitle: "Audio/Video Preview",
+    editorTitle: "✏️ Word-by-Word Editor",
+    downloadAssBtn: "💾 Download .ass file",
+    lineLabel: "Line",
+    addStartBtn: "+ at start",
+    addStartTitle: "Add word at the beginning of the line",
+    addLineBelowBtn: "+ line below",
+    addLineBelowTitle: "Add new line below",
+    listenTitle: "Listen",
+    startNewLineTitle: "Start new line from this word",
+    addAfterTitle: "Add word after",
+    activateTitle: "Activate",
+    deactivateTitle: "Deactivate",
+    deleteTitle: "Delete",
+    startLabel: "start:",
+    endLabel: "end:",
+    addLineEndBtn: "➕ Add line at the end",
+    newWordPlaceholder: "word",
+    newLinePlaceholder: "new line",
+    errorModelDownload: "Failed to start model download.",
+    errorServerConn: "Error connecting to the server.",
+    errorTranscription: "Error transcribing video.",
+    errorAssGeneration: "Failed to generate subtitle file.",
+    errorUnknown: "Unknown error",
+    errorAssSave: "Error generating/saving .ass file:",
+    errorFastApi: "Could not connect to backend server. Make sure the FastAPI server is running on port 8000.",
+  }
+};
+
+
 // Helper function to enforce minimum word duration and shift overlapping words
 const adjustWordTimings = (wordsList: WordItem[], minDuration: number): WordItem[] => {
   // Deep copy to avoid mutating original objects
@@ -68,6 +233,7 @@ export default function Home() {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isTauri, setIsTauri] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
+  const [lang, setLang] = useState<LangType>("en");
 
   // Load theme from localStorage
   useEffect(() => {
@@ -75,7 +241,15 @@ export default function Home() {
     if (savedTheme) {
       setTheme(savedTheme);
     }
+    const savedLang = localStorage.getItem("lang") as LangType | null;
+    if (savedLang) {
+      setLang(savedLang);
+    }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("lang", lang);
+  }, [lang]);
 
   // Apply theme and setup media listeners
   useEffect(() => {
@@ -310,12 +484,12 @@ export default function Home() {
       if (response.ok) {
         fetchModels();
       } else {
-        alert("Не удалось запустить скачивание модели.");
+        alert(DICT[lang].errorModelDownload);
         fetchModels();
       }
     } catch (err) {
       console.error(err);
-      alert("Ошибка при связи с сервером.");
+      alert(DICT[lang].errorServerConn);
       fetchModels();
     }
   };
@@ -415,8 +589,8 @@ export default function Home() {
       }
 
       if (!response.ok) {
-        const errorText = await response.json().catch(() => ({ detail: "Неизвестная ошибка" }));
-        throw new Error(errorText.detail || "Ошибка при распознавании видео.");
+        const errorText = await response.json().catch(() => ({ detail: DICT[lang].errorUnknown }));
+        throw new Error(errorText.detail || DICT[lang].errorTranscription);
       }
 
       const data = await response.json();
@@ -445,7 +619,7 @@ export default function Home() {
       setStep("editor");
     } catch (err: any) {
       console.error(err);
-      setErrorMsg(err.message || "Не удалось связаться с сервером бэкенда. Убедитесь, что FastAPI сервер запущен на порту 8000.");
+      setErrorMsg(err.message || DICT[lang].errorFastApi);
       setStep("upload");
       fetchModels(); // Refresh model states
     } finally {
@@ -502,7 +676,7 @@ export default function Home() {
       }
 
       const newWord: WordItem = {
-        word: "слово",
+        word: DICT[lang].newWordPlaceholder,
         start: Number(newStart.toFixed(2)),
         end: Number(newEnd.toFixed(2)),
         id: `w-new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -538,7 +712,7 @@ export default function Home() {
       }
 
       const newWord: WordItem = {
-        word: "новая строка",
+        word: DICT[lang].newLinePlaceholder,
         start: Number(newStart.toFixed(2)),
         end: Number(newEnd.toFixed(2)),
         id: `w-newline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -754,7 +928,7 @@ export default function Home() {
         }),
       });
 
-      if (!response.ok) throw new Error("Не удалось сгенерировать файл субтитров.");
+      if (!response.ok) throw new Error(DICT[lang].errorAssGeneration);
 
       const assContent = await response.text();
       const defaultFilename = `${file?.name ? file.name.split(".")[0] : "subtitles"}.ass`;
@@ -787,7 +961,7 @@ export default function Home() {
     } catch (err: any) {
       console.error("ASS file saving error:", err);
       const details = typeof err === "string" ? err : (err?.message || JSON.stringify(err));
-      alert(`Ошибка при генерации/сохранении .ass файла:\n${details || "Неизвестная ошибка"}`);
+      alert(`${DICT[lang].errorAssSave}\n${details || DICT[lang].errorUnknown}`);
     }
   };
 
@@ -802,21 +976,33 @@ export default function Home() {
 
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
           <div style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
-            Генерация пословных субтитров
+            {DICT[lang].appDesc}
           </div>
 
-          <div className="theme-toggle-container">
-            <span className="theme-label">Тема оформления:</span>
-            <select
-              value={theme}
-              onChange={(e) => setTheme(e.target.value as any)}
-              className="theme-select"
-              title="Выберите тему оформления"
-            >
-              <option value="system">💻 Системная</option>
-              <option value="light">☀️ Светлая</option>
-              <option value="dark">🌙 Тёмная</option>
-            </select>
+          <div className="theme-toggle-container" style={{ display: "flex", gap: "1rem" }}>
+            <div>
+              <span className="theme-label" style={{ marginRight: "0.5rem" }}>{DICT[lang].langLabel}</span>
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value as LangType)}
+                className="theme-select"
+              >
+                <option value="ru">Русский</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <div>
+              <span className="theme-label" style={{ marginRight: "0.5rem" }}>{DICT[lang].themeLabel}</span>
+              <select
+                value={theme}
+                onChange={(e) => setTheme(e.target.value as any)}
+                className="theme-select"
+              >
+                <option value="system">{DICT[lang].themeSystem}</option>
+                <option value="light">{DICT[lang].themeLight}</option>
+                <option value="dark">{DICT[lang].themeDark}</option>
+              </select>
+            </div>
           </div>
         </div>
       </header>
@@ -836,9 +1022,7 @@ export default function Home() {
           alignItems: "center",
           gap: "1rem"
         }}>
-          <div>
-            ⚠️ <strong>Внимание:</strong> Вы используете десктопную версию (Tauri). Из-за особенностей движка WebKit2GTK воспроизведение видео в предпросмотре может работать нестабильно (лаги, артефакты). Мы рекомендуем пока использовать веб-версию для более плавной работы.
-          </div>
+          <div dangerouslySetInnerHTML={{ __html: DICT[lang].tauriWarning }} />
           <button
             onClick={() => setShowTauriWarning(false)}
             style={{
@@ -874,7 +1058,7 @@ export default function Home() {
           marginBottom: "2rem",
           color: "var(--text-error-banner)"
         }}>
-          ⚠️ <strong>Ошибка:</strong> {errorMsg}
+          <span dangerouslySetInnerHTML={{ __html: DICT[lang].errorLabel }} /> {errorMsg}
         </div>
       )}
 
@@ -899,8 +1083,8 @@ export default function Home() {
                 accept="video/*,audio/*"
               />
               <span className="upload-icon">🎬</span>
-              <h2 className="upload-title">Перетащите видео или аудио файл</h2>
-              <p className="upload-subtitle">Поддерживаются форматы MP4, MKV, MOV, MP3, WAV и др.</p>
+              <h2 className="upload-title">{DICT[lang].uploadTitle}</h2>
+              <p className="upload-subtitle">{DICT[lang].uploadSubtitle}</p>
 
               {file && (
                 <div style={{
@@ -912,10 +1096,10 @@ export default function Home() {
                   maxWidth: "100%",
                   wordBreak: "break-all"
                 }}>
-                  📄 <strong>Выбран файл:</strong> {file.name} {file.size > 0 && `(${(file.size / (1024 * 1024)).toFixed(2)} MB)`}
+                  <span dangerouslySetInnerHTML={{ __html: DICT[lang].fileSelected }} /> {file.name} {file.size > 0 && `(${(file.size / (1024 * 1024)).toFixed(2)} MB)`}
                   {localFilePath && (
                     <div style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                      <strong>Путь на диске:</strong> {localFilePath}
+                      <strong>{DICT[lang].filePath}</strong> {localFilePath}
                     </div>
                   )}
                 </div>
@@ -929,11 +1113,11 @@ export default function Home() {
                   onClick={startTranscription}
                   disabled={modelsList.find(m => m.name === selectedModel)?.cached === false}
                 >
-                  🚀 Начать распознавание речи
+                  {DICT[lang].startTranscription}
                 </button>
                 {modelsList.find(m => m.name === selectedModel)?.cached === false && (
                   <p style={{ color: "var(--error)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
-                    Выбранная модель не скачана. Скачайте её справа перед продолжением.
+                    {DICT[lang].modelNotDownloaded}
                   </p>
                 )}
               </div>
@@ -953,10 +1137,10 @@ export default function Home() {
           }}>
             <div>
               <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                🧠 Модель Whisper ИИ
+                {DICT[lang].modelTitle}
               </h3>
               <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "1rem" }}>
-                Выберите размер модели. Большие модели точнее, но работают медленнее и требуют больше VRAM/ОЗУ.
+                {DICT[lang].modelDesc}
               </p>
               <select
                 className="form-control"
@@ -964,17 +1148,17 @@ export default function Home() {
                 onChange={(e) => setSelectedModel(e.target.value)}
                 style={{ fontWeight: 600 }}
               >
-                <option value="tiny">Tiny (~75 MB) - Сверхбыстрая</option>
-                <option value="base">Base (~140 MB) - Быстрая</option>
-                <option value="small">Small (~460 MB) - Оптимально</option>
-                <option value="medium">Medium (~1.5 GB) - Высокая точность</option>
-                <option value="large-v3">Large-v3 (~3 GB) - Максимальная точность</option>
+                <option value="tiny">{DICT[lang].modelTinyDesc}</option>
+                <option value="base">{DICT[lang].modelBaseDesc}</option>
+                <option value="small">{DICT[lang].modelSmallDesc}</option>
+                <option value="medium">{DICT[lang].modelMediumDesc}</option>
+                <option value="large-v3">{DICT[lang].modelLargeDesc}</option>
               </select>
             </div>
 
             <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "1rem" }}>
               <h4 style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: "1rem", color: "var(--text-muted)" }}>
-                Менеджер моделей на диске
+                {DICT[lang].modelManager}
               </h4>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -1007,7 +1191,7 @@ export default function Home() {
                           borderRadius: "0.25rem",
                           border: "1px solid rgba(34, 197, 94, 0.2)"
                         }}>
-                          Скачана
+                          {DICT[lang].downloaded}
                         </span>
                       ) : m.status === "downloading" ? (
                         <span style={{
@@ -1023,7 +1207,7 @@ export default function Home() {
                           gap: "0.3rem"
                         }}>
                           <span className="spinner" style={{ width: "10px", height: "10px", borderWidth: "1.5px", margin: 0 }}></span>
-                          Загрузка...
+                          {DICT[lang].downloading}
                         </span>
                       ) : (
                         <button
@@ -1041,7 +1225,7 @@ export default function Home() {
                           onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
                           onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"}
                         >
-                          Скачать
+                          {DICT[lang].downloadBtn}
                         </button>
                       )}
                     </div>
@@ -1059,10 +1243,10 @@ export default function Home() {
           <div className="loader-card">
             <div className="spinner"></div>
             <h2 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "0.5rem" }}>
-              Распознаем речь...
+              {DICT[lang].loadingTitle}
             </h2>
             <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
-              Это может занять некоторое время. Наша нейросеть запускает модель <strong>{selectedModel}</strong>, извлекает дорожку и выравнивает таймкоды каждого слова с помощью GPU ускорения.
+              {DICT[lang].loadingDesc} <strong>{selectedModel}</strong>{DICT[lang].loadingDesc2}
             </p>
           </div>
         </div>
@@ -1074,30 +1258,30 @@ export default function Home() {
 
           {/* Left Column: Styles and Preview */}
           <aside className="sidebar-panel">
-            <h3 className="panel-title">🎨 Настройки стиля ASS</h3>
+            <h3 className="panel-title">{DICT[lang].assStylesTitle}</h3>
 
             {/* Font Selection */}
             <div className="form-group">
-              <label className="form-label">Шрифт субтитров</label>
+              <label className="form-label">{DICT[lang].fontFamilyLabel}</label>
               <select
                 className="form-control"
                 value={fontName}
                 onChange={(e) => setFontName(e.target.value)}
               >
-                <option value="Montserrat">Montserrat (Уже в каталоге)</option>
-                <option value="Inter">Inter (Уже в каталоге)</option>
-                <option value="Oswald">Oswald (Уже в каталоге)</option>
-                <option value="Roboto">Roboto (Уже в каталоге)</option>
-                <option value="Fira Mono">Fira Mono (Уже в каталоге)</option>
-                <option value="Noto Sans">Noto Sans (Уже в каталоге)</option>
+                <option value="Montserrat">Montserrat ({DICT[lang].fontInCatalog})</option>
+                <option value="Inter">Inter ({DICT[lang].fontInCatalog})</option>
+                <option value="Oswald">Oswald ({DICT[lang].fontInCatalog})</option>
+                <option value="Roboto">Roboto ({DICT[lang].fontInCatalog})</option>
+                <option value="Fira Mono">Fira Mono ({DICT[lang].fontInCatalog})</option>
+                <option value="Noto Sans">Noto Sans ({DICT[lang].fontInCatalog})</option>
                 <option value="Arial">Arial</option>
-                <option value="Impact">Impact (Классика мемов)</option>
+                <option value="Impact">Impact ({DICT[lang].fontClassic})</option>
               </select>
             </div>
 
             {/* Font Size */}
             <div className="form-group">
-              <label className="form-label">Размер шрифта: {fontSize}</label>
+              <label className="form-label">{DICT[lang].fontSizeLabel} {fontSize}</label>
               <input
                 type="range"
                 min="14"
@@ -1117,13 +1301,13 @@ export default function Home() {
                   onChange={(e) => setFontBold(e.target.checked)}
                   style={{ width: "16px", height: "16px", cursor: "pointer" }}
                 />
-                <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>Жирное начертание (Bold)</span>
+                <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>{DICT[lang].fontBoldLabel}</span>
               </label>
             </div>
 
             {/* Vertical Position Shift */}
             <div className="form-group">
-              <label className="form-label">Смещение по вертикали: {verticalShift > 0 ? `+${verticalShift}` : verticalShift}</label>
+              <label className="form-label">{DICT[lang].verticalShiftLabel} {verticalShift > 0 ? `+${verticalShift}` : verticalShift}</label>
               <input
                 type="range"
                 min="-500"
@@ -1136,7 +1320,7 @@ export default function Home() {
 
             {/* Text Opacity */}
             <div className="form-group">
-              <label className="form-label">Прозрачность текста: {textOpacity}%</label>
+              <label className="form-label">{DICT[lang].textOpacityLabel} {textOpacity}%</label>
               <input
                 type="range"
                 min="0"
@@ -1149,20 +1333,20 @@ export default function Home() {
 
             {/* Subtitle Style Type */}
             <div className="form-group">
-              <label className="form-label">Стиль анимации</label>
+              <label className="form-label">{DICT[lang].animationStyleLabel}</label>
               <select
                 className="form-control"
                 value={styleMode}
                 onChange={(e) => setStyleMode(e.target.value as any)}
               >
-                <option value="active_word">Active Word (Highlight текущего слова)</option>
-                <option value="karaoke">Karaoke (Заполнение цветом в строке)</option>
+                <option value="active_word">{DICT[lang].animationActiveWord}</option>
+                <option value="karaoke">{DICT[lang].animationKaraoke}</option>
               </select>
             </div>
 
             {/* Inactive Word Color */}
             <div className="form-group">
-              <label className="form-label">Цвет обычного текста</label>
+              <label className="form-label">{DICT[lang].inactiveColorLabel}</label>
               <div className="color-picker-container">
                 <div className="color-picker-preview" style={{ backgroundColor: inactiveColor }}>
                   <input
@@ -1178,7 +1362,7 @@ export default function Home() {
 
             {/* Active Word Highlight Color */}
             <div className="form-group">
-              <label className="form-label">Цвет активного слова</label>
+              <label className="form-label">{DICT[lang].activeColorLabel}</label>
               <div className="color-picker-container">
                 <div className="color-picker-preview" style={{ backgroundColor: activeColor }}>
                   <input
@@ -1200,7 +1384,7 @@ export default function Home() {
                   onChange={(e) => setOutlineEnabled(e.target.checked)}
                   style={{ width: "16px", height: "16px", cursor: "pointer" }}
                 />
-                <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>Обводка текста</span>
+                <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>{DICT[lang].outlineLabel}</span>
               </label>
               {outlineEnabled && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.5rem" }}>
@@ -1217,7 +1401,7 @@ export default function Home() {
                   </div>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label" style={{ fontSize: "0.85rem", color: "var(--text-muted)", display: "block", marginBottom: "0.25rem" }}>
-                      Толщина обводки: {outlineWidth}
+                      {DICT[lang].outlineWidthLabel} {outlineWidth}
                     </label>
                     <input
                       type="range"
@@ -1241,7 +1425,7 @@ export default function Home() {
                   onChange={(e) => setShadowEnabled(e.target.checked)}
                   style={{ width: "16px", height: "16px", cursor: "pointer" }}
                 />
-                <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>Тень текста</span>
+                <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>{DICT[lang].shadowLabel}</span>
               </label>
               {shadowEnabled && (
                 <div className="color-picker-container">
@@ -1267,7 +1451,7 @@ export default function Home() {
                   onChange={(e) => setBgEnabled(e.target.checked)}
                   style={{ width: "16px", height: "16px", cursor: "pointer" }}
                 />
-                <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>Задний фон (плашка)</span>
+                <span className="form-label" style={{ margin: 0, cursor: "pointer" }}>{DICT[lang].bgLabel}</span>
               </label>
               {bgEnabled && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.5rem" }}>
@@ -1284,7 +1468,7 @@ export default function Home() {
                   </div>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label" style={{ fontSize: "0.85rem", color: "var(--text-muted)", display: "block", marginBottom: "0.25rem" }}>
-                      Прозрачность фона: {bgOpacity}%
+                      {DICT[lang].bgOpacityLabel} {bgOpacity}%
                     </label>
                     <input
                       type="range"
@@ -1301,7 +1485,7 @@ export default function Home() {
             {/* Grouping parameters */}
             <div className="flex-inputs">
               <div className="form-group">
-                <label className="form-label">Слов в строке: {maxWordsPerLine}</label>
+                <label className="form-label">{DICT[lang].wordsPerLineLabel} {maxWordsPerLine}</label>
                 <input
                   type="number"
                   className="form-control"
@@ -1313,7 +1497,7 @@ export default function Home() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Пауза-стык (сек): {maxGapSeconds}</label>
+                <label className="form-label">{DICT[lang].gapLabel} {maxGapSeconds}</label>
                 <input
                   type="number"
                   className="form-control"
@@ -1327,7 +1511,7 @@ export default function Home() {
             </div>
 
             <div className="form-group" style={{ marginTop: "1rem" }}>
-              <label className="form-label">Минимальная длительность слова (сек): {minWordDuration}</label>
+              <label className="form-label">{DICT[lang].minWordDurationLabel} {minWordDuration}</label>
               <div style={{ display: "flex", gap: "0.75rem" }}>
                 <input
                   type="number"
@@ -1342,7 +1526,7 @@ export default function Home() {
                   className="line-action-btn"
                   style={{ whiteSpace: "nowrap", padding: "0 1rem" }}
                   onClick={() => setWords(prev => adjustWordTimings(prev, minWordDuration))}
-                  title="Применить минимальную длительность и скорректировать наложения для всех слов"
+                  title="{DICT[lang].applyTitle}"
                 >
                   Применить
                 </button>
@@ -1352,7 +1536,7 @@ export default function Home() {
             {/* Media Preview Player */}
             {mediaUrl && (
               <div style={{ marginTop: "2rem" }}>
-                <h4 className="form-label" style={{ marginBottom: "0.5rem" }}>Предпросмотр аудио/видео</h4>
+                <h4 className="form-label" style={{ marginBottom: "0.5rem" }}>{DICT[lang].previewTitle}</h4>
                 <div
                   className="video-wrapper-container"
                   style={{
@@ -1412,9 +1596,9 @@ export default function Home() {
           {/* Right Column: Editable Words Timeline */}
           <main className="timeline-panel">
             <div className="timeline-header">
-              <h3 style={{ fontSize: "1.25rem", fontWeight: 700 }}>✏️ Пословный редактор</h3>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: 700 }}>{DICT[lang].editorTitle}</h3>
               <button className="btn btn-primary" onClick={downloadAssFile} style={{ padding: "0.5rem 1.5rem", fontSize: "0.9rem" }}>
-                💾 Скачать .ass файл
+                💾 {DICT[lang].downloadBtn} .ass файл
               </button>
             </div>
 
@@ -1435,21 +1619,21 @@ export default function Home() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <span style={{ fontSize: "0.75rem", color: "var(--primary)", fontWeight: 600 }}>
-                          Строка {lineIdx + 1} ({line[0].start.toFixed(2)}s)
+                          {DICT[lang].lineLabel} {lineIdx + 1} ({line[0].start.toFixed(2)}s)
                         </span>
                         <button
                           className="line-action-btn"
-                          title="Добавить слово в начало строки"
+                          title="{DICT[lang].addStartTitle}"
                           onClick={() => addWord(line[0].id, 'before')}
                         >
-                          + в начало
+                          {DICT[lang].addStartBtn}
                         </button>
                         <button
                           className="line-action-btn"
-                          title="Добавить новую строку ниже"
+                          title="{DICT[lang].addLineBelowTitle}"
                           onClick={() => addLine(line[line.length - 1].id)}
                         >
-                          + строку ниже
+                          {DICT[lang].addLineBelowBtn}
                         </button>
                       </div>
                       <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
@@ -1467,24 +1651,24 @@ export default function Home() {
                             className={`word-card ${isWordActive ? "active" : ""} ${word.deactivated ? "deactivated" : ""}`}
                           >
                             <div className="word-card-toolbar">
-                              <button className="word-action-btn" title="Прослушать" onClick={() => playWordSegment(word)}>🔊</button>
+                              <button className="word-action-btn" title={DICT[lang].listenTitle} onClick={() => playWordSegment(word)}>🔊</button>
                               <button
                                 className={`word-action-btn ${word.is_newline ? "active-toggle" : ""}`}
                                 style={{ color: word.is_newline ? "var(--primary)" : "inherit" }}
-                                title="Начинать новую строку с этого слова"
+                                title="{DICT[lang].startNewLineTitle}"
                                 onClick={() => setWords(prev => prev.map(w => w.id === word.id ? { ...w, is_newline: !w.is_newline } : w))}
                               >
                                 ↵
                               </button>
-                              <button className="word-action-btn" title="Добавить слово после" onClick={() => addWord(word.id, "after")}>➕</button>
+                              <button className="word-action-btn" title="{DICT[lang].addAfterTitle}" onClick={() => addWord(word.id, "after")}>➕</button>
                               <button
                                 className={`word-action-btn ${word.deactivated ? "deactivated-toggle" : ""}`}
-                                title={word.deactivated ? "Активировать" : "Деактивировать"}
+                                title={word.deactivated ? DICT[lang].activateTitle : DICT[lang].deactivateTitle}
                                 onClick={() => toggleWordActive(word.id)}
                               >
                                 {word.deactivated ? "🚫" : "👁️"}
                               </button>
-                              <button className="word-action-btn word-delete-btn" title="Удалить" onClick={() => deleteWord(word.id)}>🗑️</button>
+                              <button className="word-action-btn word-delete-btn" title={DICT[lang].deleteTitle} onClick={() => deleteWord(word.id)}>🗑️</button>
                             </div>
 
                             <input
@@ -1496,7 +1680,7 @@ export default function Home() {
 
                             <div className="time-inputs">
                               <div>
-                                <span>старт:</span>
+                                <span>{DICT[lang].startLabel}</span>
                                 <input
                                   type="number"
                                   className="time-input"
@@ -1506,7 +1690,7 @@ export default function Home() {
                                 />
                               </div>
                               <div>
-                                <span>конец:</span>
+                                <span>{DICT[lang].endLabel}</span>
                                 <input
                                   type="number"
                                   className="time-input"
@@ -1518,7 +1702,7 @@ export default function Home() {
                             </div>
 
                             <button className="play-word-btn" style={{ display: "none" }} onClick={() => playWordSegment(word)}>
-                              🔊 Прослушать
+                              🔊 {DICT[lang].listenTitle}
                             </button>
                           </div>
                         );
@@ -1541,7 +1725,7 @@ export default function Home() {
                     fontSize: "1rem"
                   }}
                 >
-                  ➕ Добавить строку в конец
+                  {DICT[lang].addLineEndBtn}
                 </button>
               </div>
             </div>
