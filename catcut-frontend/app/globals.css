@@ -397,6 +397,7 @@ select.form-control option {
   max-height: 80vh;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .timeline-header {

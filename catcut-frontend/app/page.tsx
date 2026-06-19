@@ -1639,8 +1639,8 @@ export default function Home() {
             <div style={{ padding: "0 1.5rem 1rem", borderBottom: "1px solid var(--border-color)" }}>
               <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", background: "rgba(0,0,0,0.1)", padding: "1rem", borderRadius: "0.5rem", border: "1px solid var(--border-color)" }}>
                 <p style={{ marginBottom: "0.5rem" }}>{DICT[lang].ffmpegHardsubInfo}</p>
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                  <code style={{ flex: 1, background: "rgba(0,0,0,0.2)", padding: "0.5rem", borderRadius: "0.25rem", overflowX: "auto", whiteSpace: "nowrap", userSelect: "all", color: "var(--primary)", fontFamily: "monospace" }}>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", minWidth: 0 }}>
+                  <code style={{ flex: 1, minWidth: 0, display: "block", background: "rgba(0,0,0,0.2)", padding: "0.5rem", borderRadius: "0.25rem", overflowX: "auto", whiteSpace: "nowrap", userSelect: "all", color: "var(--primary)", fontFamily: "monospace" }}>
                     {getFfmpegCommand()}
                   </code>
                   <button
