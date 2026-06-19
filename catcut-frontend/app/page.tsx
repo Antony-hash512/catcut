@@ -677,7 +677,28 @@ export default function Home() {
   };
 
   const deleteWord = (id: string) => {
-    setWords(prev => prev.filter(w => w.id !== id));
+    setWords(prev => {
+      const idx = prev.findIndex(w => w.id === id);
+      if (idx === -1) return prev;
+
+      const target = prev[idx];
+      const nextWord = idx < prev.length - 1 ? prev[idx + 1] : null;
+
+      const updated = prev.filter(w => w.id !== id);
+      if (nextWord && (target.is_newline || target.line_auto_wrap !== undefined)) {
+        return updated.map(w => {
+          if (w.id === nextWord.id) {
+            return {
+              ...w,
+              is_newline: w.is_newline || target.is_newline,
+              line_auto_wrap: w.line_auto_wrap !== undefined ? w.line_auto_wrap : target.line_auto_wrap,
+            };
+          }
+          return w;
+        });
+      }
+      return updated;
+    });
   };
 
   const toggleWordActive = (id: string) => {
@@ -720,11 +741,20 @@ export default function Home() {
         start: Number(newStart.toFixed(2)),
         end: Number(newEnd.toFixed(2)),
         id: `w-new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        deactivated: false
+        deactivated: false,
+        is_newline: position === "before" ? targetWord.is_newline : false,
+        line_auto_wrap: position === "before" ? targetWord.line_auto_wrap : undefined,
       };
 
       const updated = [...prev];
       if (position === "before") {
+        if (targetWord.is_newline) {
+          updated[idx] = {
+            ...targetWord,
+            is_newline: false,
+            line_auto_wrap: undefined
+          };
+        }
         updated.splice(idx, 0, newWord);
       } else {
         updated.splice(idx + 1, 0, newWord);
@@ -801,12 +831,36 @@ export default function Home() {
     const lines = getGroupedLines();
     if (lineIdx < 0 || lineIdx >= lines.length) return;
     const firstWord = lines[lineIdx][0];
-    setWords(prev => prev.map(w => {
-      if (w.id === firstWord.id) {
-        return { ...w, line_auto_wrap: w.line_auto_wrap === false ? true : false };
+    const isCurrentlyAutoWrap = firstWord.line_auto_wrap !== false;
+
+    setWords(prev => {
+      const firstWordIdx = prev.findIndex(w => w.id === firstWord.id);
+      if (firstWordIdx === -1) return prev;
+
+      let updated = prev.map((w, idx) => {
+        if (idx === firstWordIdx) {
+          return { ...w, line_auto_wrap: !isCurrentlyAutoWrap };
+        }
+        return w;
+      });
+
+      // If we are disabling auto-wrap (turning it off), we want to preserve the boundary with the next line
+      // by making the first word of the NEXT line start a new line explicitly (is_newline: true).
+      if (isCurrentlyAutoWrap) { // turning OFF
+        const nextLine = lines[lineIdx + 1];
+        if (nextLine && nextLine.length > 0) {
+          const nextLineFirstWord = nextLine[0];
+          updated = updated.map(w => {
+            if (w.id === nextLineFirstWord.id) {
+              return { ...w, is_newline: true };
+            }
+            return w;
+          });
+        }
       }
-      return w;
-    }));
+
+      return updated;
+    });
   };
 
   const moveFirstWordToPrevLine = (lineIdx: number) => {
