@@ -9,6 +9,7 @@ interface WordItem {
   id: string; // unique identifier
   deactivated?: boolean;
   is_newline?: boolean;
+  line_auto_wrap?: boolean;
 }
 
 interface ModelItem {
@@ -100,6 +101,11 @@ const DICT = {
     startLabel: "старт:",
     endLabel: "конец:",
     addLineEndBtn: "➕ Добавить строку в конец",
+    addLineStartBtn: "➕ Добавить строку в начало",
+    autoWrapLabel: "Авто-перенос слов",
+    moveFirstWordPrev: "⬅️ Первое слово на пред.",
+    moveLastWordNext: "Последнее слово на след. ➡️",
+    mergeNextTitle: "Объединить со след. словом",
     newWordPlaceholder: "слово",
     newLinePlaceholder: "новая строка",
     errorModelDownload: "Не удалось запустить скачивание модели.",
@@ -179,6 +185,11 @@ const DICT = {
     startLabel: "start:",
     endLabel: "end:",
     addLineEndBtn: "➕ Add line at the end",
+    addLineStartBtn: "➕ Add line at the beginning",
+    autoWrapLabel: "Auto-wrap words",
+    moveFirstWordPrev: "⬅️ First word to prev",
+    moveLastWordNext: "Last word to next ➡️",
+    mergeNextTitle: "Merge with next word",
     newWordPlaceholder: "word",
     newLinePlaceholder: "new line",
     errorModelDownload: "Failed to start model download.",
@@ -757,6 +768,98 @@ export default function Home() {
     });
   };
 
+  const addLineToStart = () => {
+    setWords(prev => {
+      let newStart = 0;
+      let newEnd = 0.5;
+      if (prev.length > 0) {
+        newStart = Math.max(0, prev[0].start - 0.5);
+        newEnd = prev[0].start;
+      }
+      const newWord: WordItem = {
+        word: DICT[lang].newLinePlaceholder,
+        start: Number(newStart.toFixed(2)),
+        end: Number(newEnd.toFixed(2)),
+        id: `w-newline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        deactivated: false,
+        is_newline: true,
+        line_auto_wrap: false,
+      };
+      if (prev.length > 0) {
+        const updatedPrev = [...prev];
+        updatedPrev[0] = { ...updatedPrev[0], is_newline: true };
+        return [newWord, ...updatedPrev];
+      }
+      return [newWord];
+    });
+  };
+
+  const toggleLineAutoWrap = (lineIdx: number) => {
+    const lines = getGroupedLines();
+    if (lineIdx < 0 || lineIdx >= lines.length) return;
+    const firstWord = lines[lineIdx][0];
+    setWords(prev => prev.map(w => {
+      if (w.id === firstWord.id) {
+        return { ...w, line_auto_wrap: w.line_auto_wrap === false ? true : false };
+      }
+      return w;
+    }));
+  };
+
+  const moveFirstWordToPrevLine = (lineIdx: number) => {
+    const lines = getGroupedLines();
+    if (lineIdx <= 0) return;
+    const prevLine = lines[lineIdx - 1];
+    const currentLine = lines[lineIdx];
+    if (currentLine.length === 0) return;
+
+    const wordToMove = currentLine[0];
+    const nextWord = currentLine.length > 1 ? currentLine[1] : null;
+    const prevLineFirstWord = prevLine[0];
+
+    setWords(prev => prev.map(w => {
+      if (w.id === wordToMove.id) return { ...w, is_newline: false };
+      if (nextWord && w.id === nextWord.id) return { ...w, is_newline: true };
+      if (w.id === prevLineFirstWord.id) return { ...w, line_auto_wrap: false };
+      return w;
+    }));
+  };
+
+  const moveLastWordToNextLine = (lineIdx: number) => {
+    const lines = getGroupedLines();
+    if (lineIdx >= lines.length - 1) return;
+    const currentLine = lines[lineIdx];
+    if (currentLine.length === 0) return;
+
+    const wordToMove = currentLine[currentLine.length - 1];
+    const nextLineFirstWord = lines[lineIdx + 1][0];
+
+    setWords(prev => prev.map(w => {
+      if (w.id === wordToMove.id) return { ...w, is_newline: true, line_auto_wrap: false };
+      if (w.id === nextLineFirstWord.id) return { ...w, is_newline: false };
+      return w;
+    }));
+  };
+
+  const mergeWithNext = (wordId: string) => {
+    setWords(prev => {
+      const idx = prev.findIndex(w => w.id === wordId);
+      if (idx === -1 || idx === prev.length - 1) return prev;
+      const current = prev[idx];
+      const next = prev[idx + 1];
+      const nextText = next.word.trim();
+      const hasHyphen = nextText.startsWith('-');
+      const mergedWord: WordItem = {
+        ...current,
+        word: current.word.trim() + (hasHyphen ? '' : ' ') + nextText,
+        end: next.end,
+      };
+      const updated = [...prev];
+      updated.splice(idx, 2, mergedWord);
+      return updated;
+    });
+  };
+
   // Play a specific word segment
   const playWordSegment = async (word: WordItem) => {
     if (!mediaRef.current) return;
@@ -898,22 +1001,35 @@ export default function Home() {
   const getGroupedLines = () => {
     const lines: WordItem[][] = [];
     let currentLine: WordItem[] = [];
+    let currentLineAutoWrap = true;
 
     words.forEach((word) => {
       if (currentLine.length === 0) {
         currentLine.push(word);
+        currentLineAutoWrap = word.line_auto_wrap !== false;
         return;
       }
 
       const prevWord = currentLine[currentLine.length - 1];
       const gap = word.start - prevWord.end;
 
-      if (currentLine.length >= maxWordsPerLine || gap > maxGapSeconds || word.is_newline) {
+      if (word.is_newline) {
         lines.push(currentLine);
         currentLine = [word];
-      } else {
-        currentLine.push(word);
+        currentLineAutoWrap = word.line_auto_wrap !== false;
+        return;
       }
+
+      if (currentLineAutoWrap) {
+        if (currentLine.length >= maxWordsPerLine || gap > maxGapSeconds) {
+          lines.push(currentLine);
+          currentLine = [word];
+          currentLineAutoWrap = word.line_auto_wrap !== false;
+          return;
+        }
+      }
+
+      currentLine.push(word);
     });
 
     if (currentLine.length > 0) {
@@ -1670,6 +1786,23 @@ export default function Home() {
             </div>
 
             <div className="timeline-scroll">
+              <div style={{ display: "flex", justifyContent: "center", padding: "1.5rem" }}>
+                <button
+                  onClick={addLineToStart}
+                  style={{
+                    background: "var(--primary)",
+                    color: "white",
+                    border: "none",
+                    padding: "0.75rem 1.5rem",
+                    borderRadius: "0.5rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontSize: "1rem"
+                  }}
+                >
+                  {DICT[lang].addLineStartBtn}
+                </button>
+              </div>
               {getGroupedLines().map((line, lineIdx) => {
                 // Check if the current player playback position falls within this entire line
                 const isLineActive = line.some(w => !w.deactivated && currentTime >= w.start && currentTime <= w.end);
@@ -1684,7 +1817,7 @@ export default function Home() {
                     }}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
                         <span style={{ fontSize: "0.75rem", color: "var(--primary)", fontWeight: 600 }}>
                           {DICT[lang].lineLabel} {lineIdx + 1} ({line[0].start.toFixed(2)}s)
                         </span>
@@ -1702,8 +1835,34 @@ export default function Home() {
                         >
                           {DICT[lang].addLineBelowBtn}
                         </button>
+                        <label style={{ display: "flex", alignItems: "center", gap: "0.25rem", fontSize: "0.75rem", cursor: "pointer", marginLeft: "0.5rem" }}>
+                          <input 
+                            type="checkbox" 
+                            checked={line[0].line_auto_wrap !== false} 
+                            onChange={() => toggleLineAutoWrap(lineIdx)} 
+                          />
+                          {DICT[lang].autoWrapLabel}
+                        </label>
+                        {lineIdx > 0 && (
+                          <button
+                            className="line-action-btn"
+                            title={DICT[lang].moveFirstWordPrev}
+                            onClick={() => moveFirstWordToPrevLine(lineIdx)}
+                          >
+                            {DICT[lang].moveFirstWordPrev}
+                          </button>
+                        )}
+                        {lineIdx < getGroupedLines().length - 1 && (
+                          <button
+                            className="line-action-btn"
+                            title={DICT[lang].moveLastWordNext}
+                            onClick={() => moveLastWordToNextLine(lineIdx)}
+                          >
+                            {DICT[lang].moveLastWordNext}
+                          </button>
+                        )}
                       </div>
-                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginLeft: "1rem" }}>
                         {line.filter(w => !w.deactivated).map(w => w.word.trim()).join(" ")}
                       </span>
                     </div>
@@ -1719,6 +1878,15 @@ export default function Home() {
                           >
                             <div className="word-card-toolbar">
                               <button className="word-action-btn" title={DICT[lang].listenTitle} onClick={() => playWordSegment(word)}>🔊</button>
+                              {word.id !== words[words.length - 1]?.id && (
+                                <button
+                                  className="word-action-btn"
+                                  title={DICT[lang].mergeNextTitle}
+                                  onClick={() => mergeWithNext(word.id)}
+                                >
+                                  🔗
+                                </button>
+                              )}
                               <button
                                 className={`word-action-btn ${word.is_newline ? "active-toggle" : ""}`}
                                 style={{ color: word.is_newline ? "var(--primary)" : "inherit" }}
