@@ -239,6 +239,49 @@ const adjustWordTimings = (wordsList: WordItem[], minDuration: number): WordItem
   }));
 };
 
+const applyStaticSegmentation = (wordsList: WordItem[], maxWords: number, maxGap: number): WordItem[] => {
+  if (wordsList.length === 0) return [];
+
+  const updated = wordsList.map((w, idx) => {
+    return {
+      ...w,
+      is_newline: idx === 0 ? true : w.is_newline,
+      line_auto_wrap: idx === 0 ? false : w.line_auto_wrap
+    };
+  });
+
+  let currentLineCount = 0;
+  let prevWord: WordItem | null = null;
+
+  for (let i = 0; i < updated.length; i++) {
+    const word = updated[i];
+
+    if (i === 0) {
+      currentLineCount = 1;
+      prevWord = word;
+      word.is_newline = true;
+      word.line_auto_wrap = false;
+      continue;
+    }
+
+    const gap = word.start - prevWord!.end;
+
+    if (currentLineCount >= maxWords || gap > maxGap) {
+      word.is_newline = true;
+      word.line_auto_wrap = false;
+      currentLineCount = 1;
+    } else {
+      word.is_newline = false;
+      word.line_auto_wrap = undefined;
+      currentLineCount++;
+    }
+
+    prevWord = word;
+  }
+
+  return updated;
+};
+
 export default function Home() {
   const [step, setStep] = useState<"upload" | "loading" | "editor">("upload");
   const [file, setFile] = useState<File | null>(null);
@@ -655,7 +698,8 @@ export default function Home() {
       }
 
       const adjustedWords = adjustWordTimings(allWords, minWordDuration);
-      setWords(adjustedWords);
+      const segmented = applyStaticSegmentation(adjustedWords, maxWordsPerLine, maxGapSeconds);
+      setWords(segmented);
       setStep("editor");
     } catch (err: any) {
       console.error(err);
@@ -1727,7 +1771,11 @@ export default function Home() {
                   min="1"
                   max="10"
                   value={maxWordsPerLine}
-                  onChange={(e) => setMaxWordsPerLine(Math.max(1, Number(e.target.value)))}
+                  onChange={(e) => {
+                    const val = Math.max(1, Number(e.target.value));
+                    setMaxWordsPerLine(val);
+                    setWords(prev => applyStaticSegmentation(prev, val, maxGapSeconds));
+                  }}
                 />
               </div>
 
@@ -1740,7 +1788,11 @@ export default function Home() {
                   min="0.2"
                   max="3.0"
                   value={maxGapSeconds}
-                  onChange={(e) => setMaxGapSeconds(Math.max(0.1, Number(e.target.value)))}
+                  onChange={(e) => {
+                    const val = Math.max(0.1, Number(e.target.value));
+                    setMaxGapSeconds(val);
+                    setWords(prev => applyStaticSegmentation(prev, maxWordsPerLine, val));
+                  }}
                 />
               </div>
             </div>
