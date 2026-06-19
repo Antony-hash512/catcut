@@ -11,6 +11,8 @@ interface WordItem {
   is_newline?: boolean;
   line_auto_wrap?: boolean;
   mergedFrom?: WordItem[];
+  originalStart?: number;
+  originalEnd?: number;
 }
 
 interface ModelItem {
@@ -209,8 +211,18 @@ const DICT = {
 
 // Helper function to enforce minimum word duration and shift overlapping words
 const adjustWordTimings = (wordsList: WordItem[], minDuration: number): WordItem[] => {
-  // Deep copy to avoid mutating original objects
-  const adjusted = wordsList.map(w => ({ ...w }));
+  // Deep copy and restore original timings (if present) as the base for calculation
+  const adjusted = wordsList.map(w => {
+    const baseStart = w.originalStart !== undefined ? w.originalStart : w.start;
+    const baseEnd = w.originalEnd !== undefined ? w.originalEnd : w.end;
+    return {
+      ...w,
+      start: baseStart,
+      end: baseEnd,
+      originalStart: baseStart,
+      originalEnd: baseEnd
+    };
+  });
   const n = adjusted.length;
 
   for (let i = 0; i < n; i++) {
@@ -690,6 +702,8 @@ export default function Home() {
                 word: w.word,
                 start: w.start,
                 end: w.end,
+                originalStart: w.start,
+                originalEnd: w.end,
                 id: `w-${counter++}`
               });
             });
@@ -717,7 +731,8 @@ export default function Home() {
   };
 
   const updateWordTime = (id: string, field: "start" | "end", value: number) => {
-    setWords(prev => prev.map(w => w.id === id ? { ...w, [field]: value } : w));
+    const originalField = field === "start" ? "originalStart" : "originalEnd";
+    setWords(prev => prev.map(w => w.id === id ? { ...w, [field]: value, [originalField]: value } : w));
   };
 
   const deleteWord = (id: string) => {
@@ -784,6 +799,8 @@ export default function Home() {
         word: DICT[lang].newWordPlaceholder,
         start: Number(newStart.toFixed(2)),
         end: Number(newEnd.toFixed(2)),
+        originalStart: Number(newStart.toFixed(2)),
+        originalEnd: Number(newEnd.toFixed(2)),
         id: `w-new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         deactivated: false,
         is_newline: position === "before" ? targetWord.is_newline : false,
@@ -829,6 +846,8 @@ export default function Home() {
         word: DICT[lang].newLinePlaceholder,
         start: Number(newStart.toFixed(2)),
         end: Number(newEnd.toFixed(2)),
+        originalStart: Number(newStart.toFixed(2)),
+        originalEnd: Number(newEnd.toFixed(2)),
         id: `w-newline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         deactivated: false,
         is_newline: true
@@ -857,6 +876,8 @@ export default function Home() {
         word: DICT[lang].newLinePlaceholder,
         start: Number(newStart.toFixed(2)),
         end: Number(newEnd.toFixed(2)),
+        originalStart: Number(newStart.toFixed(2)),
+        originalEnd: Number(newEnd.toFixed(2)),
         id: `w-newline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         deactivated: false,
         is_newline: true,
@@ -959,6 +980,7 @@ export default function Home() {
         ...current,
         word: current.word.trim() + (hasHyphen ? '' : ' ') + nextText,
         end: next.end,
+        originalEnd: next.originalEnd !== undefined ? next.originalEnd : next.end,
         mergedFrom,
       };
       const updated = [...prev];
