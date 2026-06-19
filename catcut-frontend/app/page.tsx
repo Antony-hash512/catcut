@@ -10,6 +10,7 @@ interface WordItem {
   deactivated?: boolean;
   is_newline?: boolean;
   line_auto_wrap?: boolean;
+  mergedFrom?: WordItem[];
 }
 
 interface ModelItem {
@@ -106,6 +107,7 @@ const DICT = {
     moveFirstWordPrev: "⬅️ Первое слово на пред.",
     moveLastWordNext: "Последнее слово на след. ➡️",
     mergeNextTitle: "Объединить со след. словом",
+    splitWordTitle: "Разделить слово на исходные",
     newWordPlaceholder: "слово",
     newLinePlaceholder: "новая строка",
     errorModelDownload: "Не удалось запустить скачивание модели.",
@@ -190,6 +192,7 @@ const DICT = {
     moveFirstWordPrev: "⬅️ First word to prev",
     moveLastWordNext: "Last word to next ➡️",
     mergeNextTitle: "Merge with next word",
+    splitWordTitle: "Split word into original parts",
     newWordPlaceholder: "word",
     newLinePlaceholder: "new line",
     errorModelDownload: "Failed to start model download.",
@@ -849,13 +852,41 @@ export default function Home() {
       const next = prev[idx + 1];
       const nextText = next.word.trim();
       const hasHyphen = nextText.startsWith('-');
+
+      const currentParts = current.mergedFrom || [current];
+      const nextParts = next.mergedFrom || [next];
+      const mergedFrom = [...currentParts, ...nextParts];
+
       const mergedWord: WordItem = {
         ...current,
         word: current.word.trim() + (hasHyphen ? '' : ' ') + nextText,
         end: next.end,
+        mergedFrom,
       };
       const updated = [...prev];
       updated.splice(idx, 2, mergedWord);
+      return updated;
+    });
+  };
+
+  const splitWord = (wordId: string) => {
+    setWords(prev => {
+      const idx = prev.findIndex(w => w.id === wordId);
+      if (idx === -1) return prev;
+      const current = prev[idx];
+      if (!current.mergedFrom || current.mergedFrom.length === 0) return prev;
+
+      const restored = current.mergedFrom.map((w, subIdx) => {
+        return {
+          ...w,
+          deactivated: current.deactivated,
+          is_newline: subIdx === 0 ? current.is_newline : false,
+          ...(subIdx === 0 ? { line_auto_wrap: current.line_auto_wrap } : {})
+        };
+      });
+
+      const updated = [...prev];
+      updated.splice(idx, 1, ...restored);
       return updated;
     });
   };
@@ -1885,6 +1916,15 @@ export default function Home() {
                                   onClick={() => mergeWithNext(word.id)}
                                 >
                                   🔗
+                                </button>
+                              )}
+                              {word.mergedFrom && word.mergedFrom.length > 0 && (
+                                <button
+                                  className="word-action-btn"
+                                  title={DICT[lang].splitWordTitle}
+                                  onClick={() => splitWord(word.id)}
+                                >
+                                  ✂️
                                 </button>
                               )}
                               <button

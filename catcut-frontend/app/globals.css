@@ -567,6 +567,7 @@ select.form-control option {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 0.35rem;
   margin-bottom: 0.25rem;
