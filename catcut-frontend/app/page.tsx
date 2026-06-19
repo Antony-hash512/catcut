@@ -1835,7 +1835,7 @@ export default function Home() {
                   className="line-action-btn"
                   style={{ whiteSpace: "nowrap", padding: "0 1rem" }}
                   onClick={() => setWords(prev => adjustWordTimings(prev, minWordDuration))}
-                  title="{DICT[lang].applyTitle}"
+                  title={DICT[lang].applyTitle}
                 >
                   Применить
                 </button>
@@ -1982,14 +1982,14 @@ export default function Home() {
                         </span>
                         <button
                           className="line-action-btn"
-                          title="{DICT[lang].addStartTitle}"
+                          title={DICT[lang].addStartTitle}
                           onClick={() => addWord(line[0].id, 'before')}
                         >
                           {DICT[lang].addStartBtn}
                         </button>
                         <button
                           className="line-action-btn"
-                          title="{DICT[lang].addLineBelowTitle}"
+                          title={DICT[lang].addLineBelowTitle}
                           onClick={() => addLine(line[line.length - 1].id)}
                         >
                           {DICT[lang].addLineBelowBtn}
@@ -2058,12 +2058,12 @@ export default function Home() {
                               <button
                                 className={`word-action-btn ${word.is_newline ? "active-toggle" : ""}`}
                                 style={{ color: word.is_newline ? "var(--primary)" : "inherit" }}
-                                title="{DICT[lang].startNewLineTitle}"
+                                title={DICT[lang].startNewLineTitle}
                                 onClick={() => setWords(prev => prev.map(w => w.id === word.id ? { ...w, is_newline: !w.is_newline } : w))}
                               >
                                 ↵
                               </button>
-                              <button className="word-action-btn" title="{DICT[lang].addAfterTitle}" onClick={() => addWord(word.id, "after")}>➕</button>
+                              <button className="word-action-btn" title={DICT[lang].addAfterTitle} onClick={() => addWord(word.id, "after")}>➕</button>
                               <button
                                 className={`word-action-btn ${word.deactivated ? "deactivated-toggle" : ""}`}
                                 title={word.deactivated ? DICT[lang].activateTitle : DICT[lang].deactivateTitle}
